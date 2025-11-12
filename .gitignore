@@ -117,6 +117,9 @@ ghost_source_*.tar.gz
 # Backup files
 *.bak
 config.*.json.bak
+backups/
+*.sql
+*.sql.gz
 
 # PM2
 .pm2/

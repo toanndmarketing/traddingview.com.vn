@@ -10,20 +10,41 @@ Website TradingView Vietnam chạy trên Ghost CMS v5.58.0
 
 ## 🚀 Cài đặt
 
-### 1. Clone repository
+### Cách 1: Deploy tự động (Khuyến nghị)
 
 ```bash
-git clone <repository-url>
+# Clone repository
+git clone git@github.com:toanndmarketing/traddingview.com.vn.git
+cd tradingview.com.vn
+
+# Chạy script deploy tự động
+bash scripts/deploy.sh
+```
+
+Script sẽ tự động:
+- ✅ Cài đặt Node.js, MySQL (nếu cần)
+- ✅ Tạo config file
+- ✅ Cài đặt dependencies
+- ✅ Setup PM2
+- ✅ Setup Nginx (optional)
+- ✅ Khởi động Ghost
+
+### Cách 2: Cài đặt thủ công
+
+#### 1. Clone repository
+
+```bash
+git clone git@github.com:toanndmarketing/traddingview.com.vn.git
 cd tradingview.com.vn
 ```
 
-### 2. Cài đặt dependencies
+#### 2. Cài đặt dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Cấu hình
+#### 3. Cấu hình
 
 Tạo file `config.production.json` từ template:
 
@@ -106,6 +127,24 @@ tradingview.com.vn/
 
 ## 📝 Scripts
 
+### Deployment Scripts
+
+```bash
+# Deploy lần đầu (fresh server)
+bash scripts/deploy.sh
+
+# Update code mới
+bash scripts/update.sh
+
+# Rollback về version trước
+bash scripts/rollback.sh
+
+# Setup Nginx
+sudo bash scripts/setup-nginx.sh
+```
+
+### NPM Scripts
+
 ```bash
 # Cài đặt dependencies
 npm install
@@ -116,6 +155,8 @@ npm run dev
 # Build assets
 npm run build
 ```
+
+📚 **Chi tiết:** Xem [scripts/README.md](scripts/README.md)
 
 ## 🔐 Bảo mật
 
