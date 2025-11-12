@@ -1,0 +1,58 @@
+{
+  "url": "https://your-domain.com",
+  "server": {
+    "port": 2368,
+    "host": "127.0.0.1"
+  },
+  "database": {
+    "client": "mysql",
+    "connection": {
+      "host": "127.0.0.1",
+      "user": "your_database_user",
+      "password": "your_database_password",
+      "port": 3306,
+      "database": "ghost_production"
+    }
+  },
+  "mail": {
+    "transport": "SMTP",
+    "options": {
+      "host": "email-smtp.region.amazonaws.com",
+      "port": 465,
+      "service": "SES",
+      "auth": {
+        "user": "your_aws_ses_user",
+        "pass": "your_aws_ses_password"
+      }
+    },
+    "from": "'Your Site Name' <noreply@yourdomain.com>"
+  },
+  "logging": {
+    "transports": [
+      "file",
+      "stdout"
+    ]
+  },
+  "process": "systemd",
+  "paths": {
+    "contentPath": "/path/to/ghost/content"
+  },
+  "storage": {
+    "active": "s3",
+    "s3": {
+      "accessKeyId": "YOUR_AWS_ACCESS_KEY_ID",
+      "secretAccessKey": "YOUR_AWS_SECRET_ACCESS_KEY",
+      "region": "ap-southeast-1",
+      "bucket": "your-bucket-name",
+      "assetHost": "https://your-cdn-url.com",
+      "forcePathStyle": true,
+      "signatureVersion": "v4",
+      "acl": "private"
+    }
+  },
+  "bootstrap-socket": {
+    "port": 8000,
+    "host": "localhost"
+  }
+}
+

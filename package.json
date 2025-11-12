@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "ghost-storage-adapter-s3": "^2.8.0"
+  }
+}

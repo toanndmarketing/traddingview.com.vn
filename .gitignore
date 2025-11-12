@@ -1,0 +1,133 @@
+# ===================================
+# Ghost CMS - .gitignore
+# ===================================
+
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Ghost Core (versions folder - không cần commit vì đã có sẵn)
+versions/
+
+# Environment & Config Files (chứa sensitive data)
+config.*.json
+!config.example.json
+.env
+.env.*
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+content/data/*.db
+content/data/*.sqlite*
+
+# Logs
+logs/
+*.log
+content/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Ghost Content - User Generated Data
+content/data/
+content/images/
+content/media/
+content/files/
+content/apps/
+
+# Themes - Giữ lại themes tùy chỉnh, bỏ qua themes mặc định
+content/themes/casper/
+content/themes/alto/
+content/themes/casper-v3/
+content/themes/casper-v4/
+# Giữ lại custom themes
+!content/themes/tradingview-v3/
+!content/themes/tradingview-v6/
+
+# Adapters (sẽ được cài lại qua npm)
+content/adapters/
+
+# Settings (có thể chứa sensitive data)
+content/settings/routes.yaml.backup
+
+# Public files (generated)
+content/public/
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE & Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+*.iml
+
+# OS Files
+.DS_Store
+desktop.ini
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.old
+
+# Build files
+dist/
+build/
+.cache/
+
+# Coverage & Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Ghost specific
+.ghost-cli
+ghost-dev.db
+.ghost.json
+
+# Archive files
+*.tar.gz
+*.zip
+*.rar
+ghost_source_*.tar.gz
+
+# Backup files
+*.bak
+config.*.json.bak
+
+# PM2
+.pm2/
+ecosystem.config.js
+
+# SSL Certificates (nếu có)
+*.pem
+*.key
+*.crt
+*.cert
+
+# Custom
+system/
+

@@ -1,0 +1,7 @@
+{{#if authors}}
+    <section class="gh-about-donate">
+        {{#foreach authors}}
+            <iframe id='tradingview-donate' src='{{ @custom.code_inject_donate }}?name={{name}}&author={{slug}}&auth_image={{ img_url profile_image }}' class='rounded' title='tradingview-donate' height="320" width="auto" frameborder="0" allowfullscreen></iframe>
+        {{/foreach}}
+    </section>
+{{/if}}

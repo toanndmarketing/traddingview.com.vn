@@ -1,0 +1,7 @@
+{{#if authors}}
+    {{#foreach authors}}
+        <livewire lazy data-component="widgets.donates" data-params="{'name':'{{name}}', 'ref_id': '{{slug}}', 'source': 'tradingview.com.vn'}">
+            {{> "components/lazy"}}
+        </livewire>
+    {{/foreach}}
+{{/if}}

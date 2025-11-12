@@ -1,0 +1,16 @@
+{{!< default-home}}
+
+{{> "components/background-image" headerStyle=@custom.header_style}}
+
+{{> "components/header" headerStyle=@custom.header_style}}
+
+{{#match @custom.header_style "!=" "Highlight"}}
+    {{> "components/featured" showFeatured=@custom.show_featured_posts limit=4}}
+{{/match}}
+
+
+<main class="gh-main gh-outer">
+<!-- {{> "components/featured-horizontal" }} -->
+
+{{> "components/post-list" page="home" feed="home" postFeedStyle=@custom.post_feed_style showTitle=true showSidebar=@custom.show_publication_info_sidebar}}
+</main>

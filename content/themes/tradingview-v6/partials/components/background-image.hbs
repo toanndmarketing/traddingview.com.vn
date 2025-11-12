@@ -1,0 +1,12 @@
+{{#match @custom.header_style "==" "Highlight"}}
+    {{#if @site.cover_image}}               
+        <section class="gh-header is-classic has-image gh-outer">
+            <img class="gh-header-image" src="{{@site.cover_image}}" alt="{{@site.title}}">
+
+            <div class="gh-header-inner gh-inner">
+                <h1 class="site-title gh-header-title">{{@site.title}}</h1>
+                <p class="title-customer">{{#if @custom.header_text}}{{@custom.header_text}}{{else}}{{@site.description}}{{/if}}</p>
+            </div>
+        </section>
+    {{/if}}
+{{/match}}

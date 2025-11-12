@@ -1,0 +1,19 @@
+{{#if isSecondary}}
+	<nav class="gh-footer-menu">
+		<ul id="nav_secondary" class="nav">
+			{{#foreach navigation}}
+			    <li class="nav-sponsor nav-current">
+			        <a href="{{url}}" title="{{ label }}" class="hover:underline mx-4" style="color: var(--color-white);">{{ label }}</a>
+			    </li>
+		    {{/foreach}}
+		</ul>
+	</nav>
+{{ else }}
+	<ul id="navigation" class="nav">
+        {{#foreach navigation}}
+            <li class="{{link_class for=(url) class=(concat 'nav-' slug)}}">
+                <a href="{{url absolute='true'}}">{{label}}</a>
+            </li>
+        {{/foreach}}
+    </ul>
+{{/if}}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="{{@site.locale}}" class="h-full scroll-smooth bg-white">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ meta_title  }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "lodash":"https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js",
+            "vue":"https://unpkg.com/vue@3.3.4/dist/vue.esm-browser.js",
+            "vue/server-renderer":"https://unpkg.com/@vue/server-renderer@3.3.4/dist/server-renderer.esm-browser.js"
+        }
+    }
+    </script>
+
+    {{ghost_head}}
+</head>
+
+<body class="section-page flex h-full flex-col">
+
+    {{{body}}}
+
+    {{ghost_foot}}
+</body>
+</html>
