@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ghost-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ghostproduction
+      MYSQL_USER: ghost-814
+      MYSQL_PASSWORD: 6xJhHy7gsq61hTC3KdVq
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=1G
+      - --innodb-log-file-size=512M
+      - --innodb-redo-log-capacity=2G
+      - --innodb-flush-log-at-trx-commit=2
+      - --max-connections=200
+      - --table-open-cache=4000
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ghost-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+
+  ghost:
+    build: .
+    container_name: ghost-tradingview
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3005:3000"
+    environment:
+      NODE_ENV: production
+      database__client: mysql
+      database__connection__host: mysql
+      database__connection__user: ghost-814
+      database__connection__password: 6xJhHy7gsq61hTC3KdVq
+      database__connection__database: ghostproduction
+      url: http://localhost:3005
+      adapters__cache__Redis__host: redis
+      adapters__cache__Redis__port: 6379
+      adapters__cache__Redis__ttl: 600
+    volumes:
+      - ghost_content:/var/lib/ghost/content
+      - ./config.production.json:/var/lib/ghost/config.docker.json
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  mysql_data:
+  redis_data:
+  ghost_content:

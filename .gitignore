@@ -15,9 +15,9 @@ versions/
 
 # Environment & Config Files (chứa sensitive data)
 config.*.json
-!config.example.json
+!config.docker.json
 .env
-.env.*
+!.env.example
 
 # Database Files
 *.db
