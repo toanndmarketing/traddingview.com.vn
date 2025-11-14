@@ -1,0 +1,69 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Ghost versions (sẽ dùng từ base image)
+versions
+
+# Logs
+*.log
+content/logs/*
+
+# Database backups
+*.sql
+*.sql.gz
+backup_*.sql
+database_*.sql
+
+# Config files (chỉ copy config.docker.json)
+config.production.json
+config.example.json
+ecosystem.config.js
+ecosystem.config.example.js
+
+# Documentation
+*.md
+!README.md
+
+# Scripts (không cần trong container)
+scripts
+
+# SSL certificates
+ssl
+
+# Docker files
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Content data (sẽ dùng volumes)
+content/data/*
+content/images/*
+content/media/*
+content/files/*
+
+# Keep themes
+!content/themes
+
