@@ -18,8 +18,8 @@ RUN npm install --production && \
 RUN mkdir -p content/adapters/storage && \
     cp -r node_modules/ghost-storage-adapter-s3 content/adapters/storage/s3
 
-# Copy custom themes (if exists)
-COPY content/themes ./content/themes 2>/dev/null || true
+# Copy custom themes (if exists) - skip if not found
+RUN mkdir -p ./content/themes
 
 # Copy config file
 COPY config.docker.json ./config.production.json
