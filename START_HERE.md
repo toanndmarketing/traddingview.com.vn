@@ -1,59 +1,54 @@
 # 🚀 BẮT ĐẦU TỪ ĐÂY - Setup Ghost CMS
 
-**Server:** 139.180.221.202  
-**User:** root  
+**Server:** 139.180.221.202
+**User:** root
 **Code path:** /home/tradingview.com.vn
+**Domain:** tradingview.com.vn (Cloudflare SSL đã bật)
+**OS:** Ubuntu (Server trắng)
 
 ---
 
 ## 👋 Chào mừng!
 
-Đây là hướng dẫn setup Ghost CMS cho server **139.180.221.202**.  
+Đây là hướng dẫn setup Ghost CMS cho server **139.180.221.202**.
 Code đã được clone về `/home/tradingview.com.vn`.
+
+**Lưu ý:** Domain đã dùng Cloudflare SSL nên **KHÔNG CẦN cài SSL trên server**!
 
 ---
 
 ## ⚡ Setup nhanh nhất (Khuyến nghị)
 
-### Bước 1: SSH vào server
+### 👉 Đọc ngay: [SETUP_NHANH.md](SETUP_NHANH.md) - 10 lệnh, 10 phút!
+
+### Hoặc làm theo đây:
+
 ```bash
+# 1. SSH vào server
 ssh root@139.180.221.202
+
+# 2. Update & cài Docker
+apt-get update && apt-get upgrade -y
+curl -fsSL https://get.docker.com | sh
+
+# 3. Vào thư mục code
 cd /home/tradingview.com.vn
-```
 
-### Bước 2: Chọn 1 trong 2 phương án
-
-#### 🐳 Phương án A: Docker (10 phút - Đơn giản nhất)
-```bash
-# Chỉnh sửa config
+# 4. Sửa config
 nano config.docker.json
-# Sửa: url, AWS credentials, database password
+# Sửa: url, database password, AWS credentials
 
-# Chạy script tự động
+# 5. Chạy script tự động
 chmod +x scripts/docker-setup.sh
 bash scripts/docker-setup.sh
-```
 
-#### 🔧 Phương án B: Non-Docker (20 phút - Tối ưu hơn)
-```bash
-# Chạy script install
-chmod +x scripts/*.sh
-bash scripts/install.sh
+# 6. Cài Nginx (KHÔNG CẦN SSL vì đã có Cloudflare)
+apt-get install -y nginx
+# Copy Nginx config từ SETUP_NHANH.md
 
-# Chỉnh sửa config
-nano config.production.json
-# Sửa: url, database, AWS credentials
-
-# Start Ghost
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup
-```
-
-### Bước 3: Setup Nginx + SSL
-```bash
-# Xem hướng dẫn chi tiết trong:
-# - QUICK_SETUP_139.180.221.202.md
+# 7. Cấu hình Cloudflare
+# DNS: A record -> 139.180.221.202 (Proxied ON)
+# SSL/TLS: Full mode
 ```
 
 ---
@@ -64,8 +59,8 @@ pm2 startup
 
 | Bạn muốn | Đọc file này |
 |----------|--------------|
-| **Setup nhanh nhất** | [QUICK_SETUP_139.180.221.202.md](QUICK_SETUP_139.180.221.202.md) |
-| **Chọn phương án** | [SETUP_GUIDE.md](SETUP_GUIDE.md) |
+| **⚡ Setup nhanh nhất (10 phút)** | [SETUP_NHANH.md](SETUP_NHANH.md) ⭐ |
+| **☁️ Setup với Cloudflare SSL** | [SETUP_CLOUDFLARE_139.180.221.202.md](SETUP_CLOUDFLARE_139.180.221.202.md) ⭐ |
 | **Hướng dẫn Docker chi tiết** | [SETUP_DOCKER_139.180.221.202.md](SETUP_DOCKER_139.180.221.202.md) |
 | **Hướng dẫn Non-Docker chi tiết** | [SETUP_SERVER_139.180.221.202.md](SETUP_SERVER_139.180.221.202.md) |
 | **Xem tất cả tài liệu** | [INDEX_SETUP.md](INDEX_SETUP.md) |
@@ -160,8 +155,17 @@ Nếu gặp vấn đề:
 
 ## 🎉 Sẵn sàng bắt đầu?
 
-👉 **Bước tiếp theo:** Đọc [QUICK_SETUP_139.180.221.202.md](QUICK_SETUP_139.180.221.202.md)
+👉 **Bước tiếp theo:** Đọc [SETUP_NHANH.md](SETUP_NHANH.md) - 10 lệnh, 10 phút!
 
 **Chúc bạn setup thành công!** 🚀
+
+---
+
+## 📌 Lưu ý quan trọng
+
+- ✅ Domain đã dùng **Cloudflare SSL** → KHÔNG cần cài SSL trên server
+- ✅ Server Ubuntu trắng → Chỉ cài: Docker, Nginx, UFW
+- ✅ Nginx chỉ làm **reverse proxy** (port 80)
+- ✅ Cloudflare sẽ lo phần SSL/HTTPS
 
 
