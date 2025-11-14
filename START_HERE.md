@@ -1,171 +1,205 @@
-# 🚀 BẮT ĐẦU TỪ ĐÂY - Setup Ghost CMS
+# 🚀 SETUP GHOST CMS - 10 PHÚT
 
-**Server:** 139.180.221.202
-**User:** root
-**Code path:** /home/tradingview.com.vn
-**Domain:** tradingview.com.vn (Cloudflare SSL đã bật)
-**OS:** Ubuntu (Server trắng)
+**Server:** 139.180.221.202 | **Domain:** tradingview.com.vn (Cloudflare SSL)
 
 ---
 
-## 👋 Chào mừng!
-
-Đây là hướng dẫn setup Ghost CMS cho server **139.180.221.202**.
-Code đã được clone về `/home/tradingview.com.vn`.
-
-**Lưu ý:** Domain đã dùng Cloudflare SSL nên **KHÔNG CẦN cài SSL trên server**!
-
----
-
-## ⚡ Setup nhanh nhất (Khuyến nghị)
-
-### 👉 Đọc ngay: [SETUP_NHANH.md](SETUP_NHANH.md) - 10 lệnh, 10 phút!
-
-### Hoặc làm theo đây:
+## ⚡ COPY & PASTE - 10 LỆNH
 
 ```bash
 # 1. SSH vào server
 ssh root@139.180.221.202
 
-# 2. Update & cài Docker
+# 2. Update hệ thống
 apt-get update && apt-get upgrade -y
+
+# 3. Cài Docker
 curl -fsSL https://get.docker.com | sh
 
-# 3. Vào thư mục code
+# 4. Vào thư mục code
 cd /home/tradingview.com.vn
 
-# 4. Sửa config
+# 5. Sửa config (QUAN TRỌNG!)
 nano config.docker.json
-# Sửa: url, database password, AWS credentials
+# Sửa 4 thứ:
+# - "url": "https://tradingview.com.vn"
+# - "database.connection.password": "đổi_password_mới"
+# - "mail.options.auth": AWS SES credentials
+# - "storage.s3": AWS S3 credentials
+# Ctrl+O, Enter, Ctrl+X để lưu
 
-# 5. Chạy script tự động
+# 6. Chạy script tự động
 chmod +x scripts/docker-setup.sh
 bash scripts/docker-setup.sh
+# Script sẽ tự động build Docker, start containers, hỏi import database
 
-# 6. Cài Nginx (KHÔNG CẦN SSL vì đã có Cloudflare)
+# 7. Cài Nginx
 apt-get install -y nginx
-# Copy Nginx config từ SETUP_NHANH.md
 
-# 7. Cấu hình Cloudflare
-# DNS: A record -> 139.180.221.202 (Proxied ON)
-# SSL/TLS: Full mode
+# 8. Tạo Nginx config (KHÔNG CẦN SSL - Cloudflare lo)
+cat > /etc/nginx/sites-available/tradingview.com.vn << 'EOF'
+server {
+    listen 80;
+    server_name tradingview.com.vn www.tradingview.com.vn;
+
+    # Cloudflare Real IP
+    set_real_ip_from 173.245.48.0/20;
+    set_real_ip_from 103.21.244.0/22;
+    set_real_ip_from 103.22.200.0/22;
+    set_real_ip_from 103.31.4.0/22;
+    set_real_ip_from 141.101.64.0/18;
+    set_real_ip_from 108.162.192.0/18;
+    set_real_ip_from 190.93.240.0/20;
+    set_real_ip_from 188.114.96.0/20;
+    set_real_ip_from 197.234.240.0/22;
+    set_real_ip_from 198.41.128.0/17;
+    set_real_ip_from 162.158.0.0/15;
+    set_real_ip_from 104.16.0.0/13;
+    set_real_ip_from 104.24.0.0/14;
+    set_real_ip_from 172.64.0.0/13;
+    set_real_ip_from 131.0.72.0/22;
+    real_ip_header CF-Connecting-IP;
+
+    location / {
+        proxy_pass http://127.0.0.1:3005;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    client_max_body_size 50M;
+}
+EOF
+
+# 9. Kích hoạt Nginx
+ln -s /etc/nginx/sites-available/tradingview.com.vn /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+nginx -t && systemctl reload nginx
+
+# 10. Setup Firewall
+apt-get install -y ufw
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw --force enable
 ```
 
 ---
 
-## 📚 Tài liệu đầy đủ
+## ☁️ Cấu hình Cloudflare
 
-### 🎯 Chọn tài liệu phù hợp
+**Vào Cloudflare Dashboard:**
 
-| Bạn muốn | Đọc file này |
-|----------|--------------|
-| **⚡ Setup nhanh nhất (10 phút)** | [SETUP_NHANH.md](SETUP_NHANH.md) ⭐ |
-| **☁️ Setup với Cloudflare SSL** | [SETUP_CLOUDFLARE_139.180.221.202.md](SETUP_CLOUDFLARE_139.180.221.202.md) ⭐ |
-| **Hướng dẫn Docker chi tiết** | [SETUP_DOCKER_139.180.221.202.md](SETUP_DOCKER_139.180.221.202.md) |
-| **Hướng dẫn Non-Docker chi tiết** | [SETUP_SERVER_139.180.221.202.md](SETUP_SERVER_139.180.221.202.md) |
-| **Xem tất cả tài liệu** | [INDEX_SETUP.md](INDEX_SETUP.md) |
-| **Checklist theo dõi** | [CHECKLIST_SETUP.md](CHECKLIST_SETUP.md) |
+### 1. DNS Settings:
+```
+Type: A
+Name: @
+Content: 139.180.221.202
+Proxy: ✅ ON (màu cam)
 
----
+Type: A
+Name: www
+Content: 139.180.221.202
+Proxy: ✅ ON (màu cam)
+```
 
-## 🤔 Chưa biết chọn Docker hay Non-Docker?
-
-### Dùng Docker nếu:
-- ✅ Server đã có Docker
-- ✅ Muốn setup nhanh (10 phút)
-- ✅ Ưu tiên sự đơn giản
-- ✅ Dễ quản lý và backup
-
-### Dùng Non-Docker nếu:
-- ✅ Server không có Docker
-- ✅ Muốn tối ưu resources
-- ✅ Đã quen với Node.js, MySQL, PM2
-
-👉 **Khuyến nghị:** Dùng Docker nếu server đã có Docker!
+### 2. SSL/TLS Settings:
+```
+Mode: Full
+Always Use HTTPS: ✅ ON
+Automatic HTTPS Rewrites: ✅ ON
+```
 
 ---
 
-## 📋 Checklist nhanh
+## ✅ Kiểm tra
 
-### Docker
-- [ ] SSH vào server
-- [ ] Sửa `config.docker.json`
-- [ ] Chạy `bash scripts/docker-setup.sh`
-- [ ] Setup Nginx + SSL
-- [ ] Truy cập website
-
-### Non-Docker
-- [ ] SSH vào server
-- [ ] Chạy `bash scripts/install.sh`
-- [ ] Sửa `config.production.json`
-- [ ] Start Ghost với PM2
-- [ ] Setup Nginx + SSL
-- [ ] Truy cập website
-
----
-
-## 🆘 Cần hỗ trợ?
-
-### Lỗi thường gặp
-- **Ghost không start:** Xem logs
-- **MySQL connection error:** Kiểm tra credentials
-- **Port đã được sử dụng:** Kill process hoặc đổi port
-
-### Xem logs
 ```bash
-# Docker
+# Kiểm tra containers
+docker compose ps
+
+# Xem logs
+docker compose logs ghost
+
+# Test local
+curl http://localhost:3005
+```
+
+**Truy cập:** https://tradingview.com.vn
+
+---
+
+## 🛠️ Quản lý hàng ngày
+
+```bash
+# Start
+docker compose up -d
+
+# Stop
+docker compose down
+
+# Restart
+docker compose restart ghost
+
+# Xem logs
 docker compose logs -f ghost
 
-# Non-Docker
-pm2 logs ghost-tradingview
-```
-
-### Tìm hướng dẫn troubleshooting
-- Docker: Xem [SETUP_DOCKER_139.180.221.202.md](SETUP_DOCKER_139.180.221.202.md) phần Troubleshooting
-- Non-Docker: Xem [SETUP_SERVER_139.180.221.202.md](SETUP_SERVER_139.180.221.202.md) phần Troubleshooting
-
----
-
-## 🎯 Lộ trình khuyến nghị
-
-```
-1. Đọc file này (START_HERE.md) ✅
-   ↓
-2. Chọn phương án (Docker hoặc Non-Docker)
-   ↓
-3. Đọc QUICK_SETUP_139.180.221.202.md
-   ↓
-4. Thực hiện setup theo hướng dẫn
-   ↓
-5. Kiểm tra website hoạt động
-   ↓
-6. Hoàn tất! 🎉
+# Backup database
+docker compose exec mysql mysqldump -u root -prootpassword ghostproduction > backup.sql
 ```
 
 ---
 
-## 📞 Liên hệ
+## 🆘 Lỗi thường gặp
 
-Nếu gặp vấn đề:
-1. Kiểm tra logs
-2. Đọc phần Troubleshooting
-3. Liên hệ team support
+### Ghost không start
+```bash
+docker compose logs ghost
+docker compose restart ghost
+```
+
+### Cloudflare Error 521
+```bash
+# Kiểm tra Nginx
+systemctl status nginx
+nginx -t
+
+# Kiểm tra Ghost
+docker compose ps
+```
+
+### Cloudflare Error 522
+```bash
+# Kiểm tra firewall mở port 80
+ufw status
+
+# Kiểm tra Nginx lắng nghe port 80
+netstat -tulpn | grep :80
+```
 
 ---
 
-## 🎉 Sẵn sàng bắt đầu?
+## 📚 Tài liệu chi tiết (nếu cần)
 
-👉 **Bước tiếp theo:** Đọc [SETUP_NHANH.md](SETUP_NHANH.md) - 10 lệnh, 10 phút!
-
-**Chúc bạn setup thành công!** 🚀
+- **[SETUP_CLOUDFLARE_139.180.221.202.md](SETUP_CLOUDFLARE_139.180.221.202.md)** - Hướng dẫn chi tiết với Cloudflare
+- **[SETUP_NHANH.md](SETUP_NHANH.md)** - Bản rút gọn
+- **[SETUP_DOCKER_139.180.221.202.md](SETUP_DOCKER_139.180.221.202.md)** - Hướng dẫn Docker đầy đủ
 
 ---
 
 ## 📌 Lưu ý quan trọng
 
-- ✅ Domain đã dùng **Cloudflare SSL** → KHÔNG cần cài SSL trên server
-- ✅ Server Ubuntu trắng → Chỉ cài: Docker, Nginx, UFW
-- ✅ Nginx chỉ làm **reverse proxy** (port 80)
-- ✅ Cloudflare sẽ lo phần SSL/HTTPS
+- ✅ Domain dùng **Cloudflare SSL** → KHÔNG cần cài SSL trên server
+- ✅ Server Ubuntu trắng → Chỉ cài: **Docker, Nginx, UFW**
+- ✅ Nginx chỉ lắng nghe **port 80** (HTTP)
+- ✅ Firewall chỉ mở **port 22, 80** (KHÔNG mở 443)
+- ✅ Cloudflare lo phần HTTPS
+
+---
+
+**Chúc bạn setup thành công! 🎉**
 
 
