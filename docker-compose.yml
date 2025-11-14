@@ -59,7 +59,7 @@ services:
       adapters__cache__Redis__port: 6379
       adapters__cache__Redis__ttl: 600
     volumes:
-      - ghost_content:/var/lib/ghost/content
+      - ./content:/var/lib/ghost/content
       - ./config.production.json:/var/lib/ghost/config.docker.json
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
@@ -71,4 +71,3 @@ services:
 volumes:
   mysql_data:
   redis_data:
-  ghost_content:
