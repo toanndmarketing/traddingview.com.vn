@@ -89,20 +89,36 @@ fi
 print_info "Bước 5: Kiểm tra config.docker.json..."
 if [ ! -f "config.docker.json" ]; then
     print_warning "Chưa có config.docker.json"
-    
-    if [ -f "config.example.json" ]; then
+
+    if [ -f "config.docker.example.json" ]; then
         print_info "Tạo config.docker.json từ template..."
-        cp config.example.json config.docker.json
+        cp config.docker.example.json config.docker.json
         print_success "Đã tạo config.docker.json"
         print_warning "⚠️  VUI LÒNG CHỈNH SỬA config.docker.json với thông tin thật!"
-        print_info "Nhấn Enter để tiếp tục sau khi đã chỉnh sửa..."
+        print_warning "Cần sửa:"
+        print_warning "  - url: https://tradingview.com.vn"
+        print_warning "  - database.connection.password"
+        print_warning "  - mail.options.auth (AWS SES)"
+        print_warning "  - storage.s3 (AWS S3)"
+        print_info "Nhấn Enter để mở editor..."
         read
+        nano config.docker.json
     else
-        print_error "Không tìm thấy config.example.json"
+        print_error "Không tìm thấy config.docker.example.json"
         exit 1
     fi
 else
     print_success "config.docker.json đã tồn tại"
+
+    # Kiểm tra xem có phải placeholder không
+    if grep -q "CHANGE_THIS_PASSWORD\|YOUR_AWS" config.docker.json; then
+        print_warning "⚠️  config.docker.json có vẻ chưa được cấu hình!"
+        print_warning "Vẫn còn placeholder: CHANGE_THIS_PASSWORD, YOUR_AWS_..."
+        read -p "Bạn có muốn chỉnh sửa không? (y/n): " EDIT_CONFIG
+        if [[ $EDIT_CONFIG =~ ^[Yy]$ ]]; then
+            nano config.docker.json
+        fi
+    fi
 fi
 
 # Step 6: Stop existing containers (if any)

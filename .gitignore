@@ -15,7 +15,7 @@ versions/
 
 # Environment & Config Files (chứa sensitive data)
 config.*.json
-!config.docker.json
+!config.example.json
 .env
 !.env.example
 
@@ -124,6 +124,12 @@ backups/
 # PM2
 .pm2/
 ecosystem.config.js
+!ecosystem.config.example.js
+
+# Docker volumes data (không commit data)
+mysql_data/
+redis_data/
+ghost_content/
 
 # SSL Certificates (nếu có)
 *.pem

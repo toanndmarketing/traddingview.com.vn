@@ -19,7 +19,10 @@ curl -fsSL https://get.docker.com | sh
 # 4. Vào thư mục code
 cd /home/tradingview.com.vn
 
-# 5. Sửa config (QUAN TRỌNG!)
+# 5. Tạo config từ template (nếu chưa có)
+cp config.docker.example.json config.docker.json
+
+# 6. Sửa config (QUAN TRỌNG!)
 nano config.docker.json
 # Sửa 4 thứ:
 # - "url": "https://tradingview.com.vn"
@@ -28,15 +31,19 @@ nano config.docker.json
 # - "storage.s3": AWS S3 credentials
 # Ctrl+O, Enter, Ctrl+X để lưu
 
-# 6. Chạy script tự động
+# 7. Chạy script tự động
 chmod +x scripts/docker-setup.sh
 bash scripts/docker-setup.sh
-# Script sẽ tự động build Docker, start containers, hỏi import database
+# Script sẽ tự động:
+# - Kiểm tra config
+# - Build Docker images
+# - Start containers
+# - Hỏi import database
 
-# 7. Cài Nginx
+# 8. Cài Nginx
 apt-get install -y nginx
 
-# 8. Tạo Nginx config (KHÔNG CẦN SSL - Cloudflare lo)
+# 9. Tạo Nginx config (KHÔNG CẦN SSL - Cloudflare lo)
 cat > /etc/nginx/sites-available/tradingview.com.vn << 'EOF'
 server {
     listen 80;
@@ -75,12 +82,12 @@ server {
 }
 EOF
 
-# 9. Kích hoạt Nginx
+# 10. Kích hoạt Nginx
 ln -s /etc/nginx/sites-available/tradingview.com.vn /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
 
-# 10. Setup Firewall
+# 11. Setup Firewall
 apt-get install -y ufw
 ufw allow 22/tcp
 ufw allow 80/tcp
@@ -192,11 +199,18 @@ netstat -tulpn | grep :80
 
 ## 📌 Lưu ý quan trọng
 
+### SSL & Server:
 - ✅ Domain dùng **Cloudflare SSL** → KHÔNG cần cài SSL trên server
 - ✅ Server Ubuntu trắng → Chỉ cài: **Docker, Nginx, UFW**
 - ✅ Nginx chỉ lắng nghe **port 80** (HTTP)
 - ✅ Firewall chỉ mở **port 22, 80** (KHÔNG mở 443)
 - ✅ Cloudflare lo phần HTTPS
+
+### Config Files:
+- ✅ `config.docker.json` **KHÔNG** được commit vào Git (chứa password, AWS keys)
+- ✅ Chỉ commit `config.docker.example.json` (template)
+- ✅ Khi pull code mới, config KHÔNG bị ghi đè
+- ✅ Đọc thêm: [CONFIG_README.md](CONFIG_README.md)
 
 ---
 
