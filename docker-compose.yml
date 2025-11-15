@@ -54,13 +54,12 @@ services:
       database__connection__user: ghost-814
       database__connection__password: 6xJhHy7gsq61hTC3KdVq
       database__connection__database: ghostproduction
-      url: http://localhost:3005
       adapters__cache__Redis__host: redis
       adapters__cache__Redis__port: 6379
       adapters__cache__Redis__ttl: 600
     volumes:
       - ./content:/var/lib/ghost/content
-      - ./config.production.json:/var/lib/ghost/config.docker.json
+      - ./config.docker.json:/var/lib/ghost/config.docker.json
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
