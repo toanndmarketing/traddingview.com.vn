@@ -50,7 +50,7 @@
                                 {{#if @custom.code_inject_donate}}
                                     {{#if authors}}
                                         {{#foreach authors}}
-                                            <livewire lazy data-component="widgets.donates" data-params="{'name':'{{name}}', 'ref_id': '{{slug}}', 'source': 'tradingview.com.vn'}">
+                                            <livewire lazy data-component="widgets.donates" data-params="{'name':'{{name}}', 'ref_id': '{{slug}}', 'source': '{{@site.url}}'}">
                                                 {{> "components/lazy"}}
                                             </livewire>
                                         {{/foreach}}
