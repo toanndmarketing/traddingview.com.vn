@@ -79,17 +79,37 @@
         // Add class to parent
         parentItem.classList.add('has-submenu');
         
+        // Add dropdown icon after link text
+        const dropdownIcon = document.createElement('svg');
+        dropdownIcon.className = 'dropdown-icon';
+        dropdownIcon.setAttribute('width', '12');
+        dropdownIcon.setAttribute('height', '12');
+        dropdownIcon.setAttribute('viewBox', '0 0 12 12');
+        dropdownIcon.setAttribute('fill', 'none');
+        dropdownIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        dropdownIcon.innerHTML = '<path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>';
+        parentLink.parentNode.insertBefore(dropdownIcon, parentLink.nextSibling);
+        
         // Create submenu container
         const submenu = document.createElement('ul');
-        submenu.className = 'gh-submenu';
+        submenu.className = 'dropdown-menu';
         submenu.setAttribute('aria-label', 'Submenu');
         
         // Add submenu items
         items.forEach(function(subitem) {
+            // Create proper slug from label
+            const slug = subitem.label
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+                .replace(/đ/g, 'd')
+                .replace(/\s+/g, '-');
+            
             const li = document.createElement('li');
-            li.className = 'gh-submenu-item';
+            li.className = 'nav-item nav-' + slug;
             
             const a = document.createElement('a');
+            a.className = 'nav-link';
             a.href = subitem.url;
             a.textContent = subitem.label;
             
