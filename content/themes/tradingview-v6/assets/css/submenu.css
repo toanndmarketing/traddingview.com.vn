@@ -1,0 +1,196 @@
+/**
+ * Submenu Styles for Ghost Navigation
+ * File: submenu.css
+ * Purpose: Dropdown submenu styles for navigation items
+ * Usage: Import in theme or add via Code Injection
+ */
+
+/* Parent menu item with submenu */
+.nav li.has-submenu { 
+    position: relative;
+}
+
+/* Dropdown arrow indicator */
+.nav li.has-submenu > a::after { 
+    content: '▾';
+    margin-left: 6px;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+
+/* Rotate arrow when submenu is open */
+.nav li.has-submenu.submenu-open > a::after { 
+    transform: rotate(180deg); 
+}
+
+/* Submenu container */
+.gh-submenu { 
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 100;
+    min-width: 220px;
+    margin: 0;
+    padding: 12px 0;
+    list-style: none !important;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+}
+
+/* Show submenu on parent hover/open */
+.has-submenu.submenu-open .gh-submenu,
+.has-submenu:hover .gh-submenu { 
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Submenu item */
+.gh-submenu-item { 
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Submenu link */
+.gh-submenu-item a { 
+    display: block;
+    padding: 10px 20px;
+    color: #15171a;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    line-height: 1.5;
+}
+
+/* Submenu link hover */
+.gh-submenu-item a:hover { 
+    background-color: #f5f5f5;
+    color: var(--ghost-accent-color, #FD9220);
+}
+
+/* Active submenu item */
+.gh-submenu-item a.active,
+.gh-submenu-item a.current { 
+    color: var(--ghost-accent-color, #FD9220);
+    font-weight: 600;
+}
+
+/* Prevent submenu from closing when hovering over it */
+.gh-submenu:hover {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .gh-submenu {
+        background: #1a1a1a;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .gh-submenu-item a {
+        color: #e5e5e5;
+    }
+    
+    .gh-submenu-item a:hover {
+        background-color: #2a2a2a;
+        color: #ffffff;
+    }
+}
+
+/* Tablet and Mobile Responsive */
+@media (max-width: 767px) {
+    /* Change submenu to accordion style on mobile */
+    .gh-submenu {
+        position: static;
+        margin: 8px 0;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition: max-height 0.3s ease;
+    }
+    
+    /* Expand submenu when open */
+    .has-submenu.submenu-open .gh-submenu {
+        max-height: 500px;
+    }
+    
+    /* Mobile submenu items */
+    .gh-submenu-item a {
+        padding: 12px 20px 12px 40px;
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.9);
+        border-left: 2px solid transparent;
+    }
+    
+    /* Mobile hover/active state */
+    .gh-submenu-item a:hover,
+    .gh-submenu-item a.active {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        border-left-color: var(--ghost-accent-color, #FD9220);
+    }
+    
+    /* Arrow position on mobile */
+    .nav li.has-submenu > a::after {
+        float: right;
+        margin-top: 2px;
+    }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .gh-submenu {
+        min-width: 200px;
+        font-size: 13px;
+    }
+    
+    .gh-submenu-item a {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+}
+
+/* Animation for smooth appearance */
+@keyframes submenuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.has-submenu.submenu-open .gh-submenu {
+    animation: submenuFadeIn 0.3s ease;
+}
+
+/* Accessibility: Focus states */
+.gh-submenu-item a:focus {
+    outline: 2px solid var(--ghost-accent-color, #FD9220);
+    outline-offset: -2px;
+}
+
+/* Prevent text selection on rapid clicks */
+.nav li.has-submenu > a {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
