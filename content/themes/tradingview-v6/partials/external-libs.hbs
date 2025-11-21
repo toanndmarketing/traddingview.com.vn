@@ -1,0 +1,27 @@
+{{!-- Vue 3 CDN - Load synchronously --}}
+<script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
+
+{{!-- Axios for HTTP requests --}}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+{{!-- date-fns for date formatting --}}
+<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+
+<script>
+// Verify libraries loaded
+console.log('=== Libraries Check ===');
+console.log('Vue loaded:', typeof Vue !== 'undefined');
+console.log('axios loaded:', typeof axios !== 'undefined');
+console.log('dateFns loaded:', typeof dateFns !== 'undefined');
+
+// Make Vue helpers globally available
+if (typeof Vue !== 'undefined') {
+    window.VueHelpers = {
+        ref: Vue.ref,
+        onMounted: Vue.onMounted,
+        onBeforeUnmount: Vue.onBeforeUnmount,
+        createApp: Vue.createApp
+    };
+    console.log('Vue helpers ready');
+}
+</script>

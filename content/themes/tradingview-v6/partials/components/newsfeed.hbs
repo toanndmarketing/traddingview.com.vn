@@ -9,8 +9,23 @@
         </a>
     </h2>
     <div class="gh-featured-feed">
-        <livewire lazy data-component="widgets.fast-bull-news" data-params='{"data":null}'>
-            {{> "components/lazy"}}
-        </livewire>
+        {{!-- Vue App News Feed --}}
+        <div id="appNews">
+            <div>
+                <div style="max-height: 600px; overflow-y: scroll; padding-right: 10px;">
+                    {{!-- Loading skeleton --}}
+                    <div v-if="isLoading" class="hotNewFeed" v-for="i in 5" :key="'skeleton-' + i">
+                        <div style="height: 15px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px; width: 30%; margin-left: auto;"></div>
+                        <div style="height: 12px; background: #f0f0f0; border-radius: 4px; margin-bottom: 4px;"></div>
+                        <div style="height: 12px; background: #f0f0f0; border-radius: 4px; width: 80%;"></div>
+                    </div>
+                    {{!-- Actual news items --}}
+                    <div v-else class="hotNewFeed" v-for="newsItem in fetchedNews.pageDatas" :key="newsItem.newsId">
+                        <p class="text-right time-newfeed" v-text="formatDate(newsItem.releasedDate)"></p>
+                        <div :class="newsItem.important ? 'text-red-500 font-medium' : ''" class="font-normal break-words overflow-hidden text-justify gh-card-newfeed" v-text="newsItem.newsTitle"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>

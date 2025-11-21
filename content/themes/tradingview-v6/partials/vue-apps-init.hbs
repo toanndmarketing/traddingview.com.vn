@@ -1,0 +1,141 @@
+<script>
+// Initialize Vue Apps after DOM and libraries loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== Vue Apps Init ===');
+    console.log('Vue:', typeof Vue !== 'undefined');
+    console.log('axios:', typeof axios !== 'undefined');
+    console.log('dateFns:', typeof dateFns !== 'undefined');
+
+    if (typeof Vue === 'undefined') {
+        console.error('Vue not available!');
+        return;
+    }
+
+    const { ref, onMounted, onBeforeUnmount } = Vue;
+
+    // Sentiment App
+    if (document.getElementById('appSentiment')) {
+        Vue.createApp({
+            setup() {
+                const fetchedSentiments = ref([]);
+                const API_URL = "https://api.fastbull.com/fastbull-macro-data-service/api/v2/getIndexSpeculative";
+
+                const fetchSentiments = async () => {
+                    try {
+                        const response = await fetch(API_URL, {
+                            method: "GET",
+                            headers: { "Content-Type": "application/json", Accept: "*/*" }
+                        });
+                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                        const data = await response.json();
+                        if (typeof data.bodyMessage === "string") {
+                            const parsedData = JSON.parse(data.bodyMessage);
+                            fetchedSentiments.value = Array.isArray(parsedData) ? parsedData : Object.values(parsedData);
+                        } else if (Array.isArray(data.bodyMessage)) {
+                            fetchedSentiments.value = data.bodyMessage;
+                        }
+                        console.log('[Sentiment] Loaded:', fetchedSentiments.value.length);
+                    } catch (error) {
+                        console.error("[Sentiment] Error:", error);
+                    }
+                };
+
+                onMounted(() => fetchSentiments());
+
+                const formatPercentage = (value) => {
+                    return value ? new Intl.NumberFormat("en-US", {
+                        style: "percent",
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                    }).format(value / 100) : "0.0%";
+                };
+
+                const getStylePercent = (item, type = "long") => {
+                    const value = type === "long" ? item.longValue : item.shortValue;
+                    return { width: value > 0 ? `${value}%` : "0%" };
+                };
+
+                return { fetchedSentiments, formatPercentage, getStylePercent };
+            },
+        }).mount("#appSentiment");
+        console.log('[Sentiment] Mounted');
+    }
+
+    // News App
+    if (document.getElementById('appNews') && typeof axios !== 'undefined' && typeof dateFns !== 'undefined') {
+        const formatDate = (timestamp, dateFormat = 'dd-MM-yyyy HH:mm:ss') => {
+            const date = new Date(timestamp);
+            return isNaN(date.getTime()) ? '' : dateFns.format(date, dateFormat);
+        };
+
+        Vue.createApp({
+            setup() {
+                const socket = ref(null);
+                const fetchedNews = ref({ pageDatas: [] });
+                const isLoading = ref(true);
+                const config = {
+                    apiFastBull: 'https://api.fastbull.com',
+                    wssFastBull: 'wss://wsspush.fastbull.com'
+                };
+
+                const fetchNews = async () => {
+                    try {
+                        isLoading.value = true;
+                        const response = await axios.get(`${config.apiFastBull}/fastbull-news-service/api/getNewsPageByTagIds`, {
+                            headers: { 'Content-Type': 'application/json', 'langId': 10 },
+                            params: { pageSize: 50 }  // Giảm từ 500 xuống 50 để load nhanh hơn
+                        });
+                        const newsData = JSON.parse(response.data.bodyMessage);
+                        fetchedNews.value = newsData;
+                        console.log('[News] Loaded:', newsData.pageDatas?.length);
+                        return newsData;
+                    } catch (error) {
+                        console.error('[News] Error:', error);
+                        return { pageDatas: [] };
+                    } finally {
+                        isLoading.value = false;
+                    }
+                };
+
+                const connectWebSocket = () => {
+                    socket.value = new WebSocket(`${config.wssFastBull}/news?langId=10`);
+                    socket.value.onopen = () => console.log('[News] WebSocket opened');
+                    socket.value.onmessage = (event) => {
+                        if (event.data instanceof Blob) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const jsonData = JSON.parse(reader.result);
+                                if (jsonData.messageInfo) {
+                                    fetchedNews.value.pageDatas.unshift(JSON.parse(jsonData.messageInfo));
+                                }
+                            };
+                            reader.readAsText(event.data);
+                        } else {
+                            try {
+                                const jsonData = JSON.parse(event.data);
+                                fetchedNews.value.pageDatas.unshift(JSON.parse(jsonData.messageInfo));
+                            } catch (error) {
+                                console.error('[News] Parse error:', error);
+                            }
+                        }
+                    };
+                    socket.value.onerror = (error) => console.error('[News] WS error:', error);
+                    socket.value.onclose = () => setTimeout(connectWebSocket, 5000);
+                };
+
+                onMounted(async () => {
+                    await fetchNews();
+                    connectWebSocket();
+                });
+
+                onBeforeUnmount(() => {
+                    if (socket.value) socket.value.close();
+                });
+
+                return { fetchedNews, formatDate, isLoading };
+            }
+        }).mount('#appNews');
+        console.log('[News] Mounted');
+    }
+});
+</script>

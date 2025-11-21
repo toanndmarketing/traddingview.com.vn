@@ -111,16 +111,6 @@ b, strong {
 }
 /***END STYLE ON INJECTION**/
 
-.gh-card-newfeed {
-    -webkit-box-orient: vertical;
-    display: -webkit-box;
-    font-size: 1.35rem;
-    line-height: 1.4;
-    margin-top: 8px;
-    overflow-y: hidden;
-    text-align: justify;
-}
-
 .flex {
 	display: flex;
 }
@@ -266,4 +256,148 @@ b, strong {
 
 .scroll-top:hover .progress-circle path, .scroll-top:hover .icon-tabler-arrow-up {
     stroke: var(--ghost-accent-color);
+}
+
+.time-newfeed {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.gh-card-newfeed {
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    font-size: 1.35rem;
+    line-height: 1.4;
+    margin-top: 8px;
+    overflow-y: hidden;
+    text-align: justify;
+}
+
+.text-red-500 {
+    color: #ef4444;
+}
+.hotNewFeed {
+    padding: 6px 0;
+    border-bottom: 1px solid #eaeaea;
+    margin-bottom: 6px;
+}
+
+/* Skeleton loading animation */
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+.hotNewFeed div[style*="background: #f0f0f0"] {
+    background: linear-gradient(90deg, #f0f0f0 0px, #e0e0e0 40px, #f0f0f0 80px) !important;
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+/* Style cho mục menu */
+.nav-item {
+    position: relative; /* Để định vị dropdown */
+}
+
+.nav-link:hover {
+    color: #FD9220; /* Màu nhấn của Casper */
+}
+
+/* Style cho icon dropdown */
+.dropdown-icon {
+    margin-left: 5px;
+    font-size: 1.2rem;
+    color: #15171a;
+    transition: transform 0.2s ease;
+    display: inline;
+}
+
+/* Xoay icon khi hover */
+.nav-item:hover .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+/* Style cho mục active */
+.nav-item.active .nav-link {
+    color: #FD9220;
+    font-weight: 600;
+}
+
+/* Style cho dropdown */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    list-style: none !important;
+    margin: 0;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    z-index: 1000;
+}
+
+.dropdown-menu li {
+    padding: 0;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 8px 20px;
+    color: #15171a;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f8f9fa;
+    color: #FD9220;
+}
+
+.dropdown-menu a.active {
+    font-weight: 600;
+    color: #FD9220;
+}
+
+/* Hiển thị dropdown khi hover */
+.nav-item:hover .dropdown-menu {
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+    .nav {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-item {
+        margin-right: 0;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+
+    .nav-link {
+        font-size: 1.8rem;
+    }
+
+    .dropdown-menu {
+        position: static;
+        width: 100%;
+        border: none;
+        box-shadow: none;
+        background-color: transparent;
+        padding-left: 20px;
+    }
+
+    .dropdown-menu a {
+        font-size: 1.6rem;
+    }
 }

@@ -43,6 +43,12 @@
 	{{!-- This tag outputs all your advanced SEO meta, structured data, and other important settings, it should always be the last tag before the closing head tag --}}
 	{{ghost_head}}
 
+	{{!-- Load Vue, Axios, date-fns BEFORE body to ensure availability --}}
+	{{> "external-libs"}}
+
+	{{!-- Tailwind CSS for utility classes --}}
+	<script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 <body class="has-{{#match @custom.title_font "Elegant serif"}}serif{{else match @custom.title_font "Consistent mono"}}mono{{else}}sans{{/match}}-title has-{{#match @custom.body_font "Elegant serif"}}serif{{else}}sans{{/match}}-body">
 
@@ -110,6 +116,148 @@ if (scrollTopBtn) {
 
 {{!-- Ghost outputs required functional scripts with this tag, it should always be the last thing before the closing body tag --}}
 {{ghost_foot}}
+
+{{!-- Initialize Vue Apps after all scripts loaded --}}
+<script>
+console.log('=== Init Script Loaded ===');
+console.log('Vue:', typeof Vue);
+console.log('axios:', typeof axios);
+console.log('dateFns:', typeof dateFns);
+
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== DOM Ready ===');
+    console.log('appSentiment element:', document.getElementById('appSentiment'));
+    console.log('appNews element:', document.getElementById('appNews'));
+
+    if (typeof Vue !== 'undefined') {
+        const { ref, onMounted, onBeforeUnmount } = Vue;
+
+        // Sentiment App
+        const sentimentEl = document.getElementById('appSentiment');
+        console.log('[Sentiment] Element found:', !!sentimentEl);
+        if (sentimentEl) {
+        try {
+            Vue.createApp({
+                setup() {
+                    const fetchedSentiments = ref([]);
+                    const fetchSentiments = async () => {
+                        try {
+                            console.log('[Sentiment] Fetching...');
+                            const response = await fetch("https://api.fastbull.com/fastbull-macro-data-service/api/v2/getIndexSpeculative", {
+                                method: "GET",
+                                headers: { "Content-Type": "application/json", Accept: "*/*" }
+                            });
+                            if (!response.ok) throw new Error('HTTP ' + response.status);
+                            const data = await response.json();
+                            console.log('[Sentiment] Response:', data);
+                            console.log('[Sentiment] bodyMessage type:', typeof data.bodyMessage);
+
+                            // Parse bodyMessage (it's a JSON string)
+                            if (typeof data.bodyMessage === "string") {
+                                const parsedData = JSON.parse(data.bodyMessage);
+                                fetchedSentiments.value = Array.isArray(parsedData) ? parsedData : Object.values(parsedData);
+                            } else if (Array.isArray(data.bodyMessage)) {
+                                fetchedSentiments.value = data.bodyMessage;
+                            } else if (data.bodyMessage && typeof data.bodyMessage === 'object') {
+                                fetchedSentiments.value = Object.values(data.bodyMessage);
+                            } else {
+                                console.warn('[Sentiment] No valid data structure found!', data);
+                            }
+
+                            console.log('[Sentiment] Loaded:', fetchedSentiments.value.length);
+                        } catch (error) {
+                            console.error('[Sentiment] Error:', error);
+                        }
+                    };
+                    const getStylePercent = (sentiment, type = 'long') => {
+                        const value = type === 'long' ? sentiment.longValue : sentiment.shortValue;
+                        return { width: `${value}%` };
+                    };
+                    const formatPercentage = (value) => `${value}%`;
+                    onMounted(fetchSentiments);
+                    return { fetchedSentiments, getStylePercent, formatPercentage };
+                }
+            }).mount('#appSentiment');
+            console.log('[Sentiment] Mounted');
+        } catch (e) {
+            console.error('[Sentiment] Mount error:', e);
+        }
+    }
+
+    // News App
+    if (document.getElementById('appNews') && typeof axios !== 'undefined' && typeof dateFns !== 'undefined') {
+        try {
+            const formatDate = (timestamp, dateFormat = 'dd-MM-yyyy HH:mm:ss') => {
+                const date = new Date(timestamp);
+                return isNaN(date.getTime()) ? '' : dateFns.format(date, dateFormat);
+            };
+            Vue.createApp({
+                setup() {
+                    const socket = ref(null);
+                    const fetchedNews = ref({ pageDatas: [] });
+                    const isLoading = ref(true);
+                    const fetchNews = async () => {
+                        try {
+                            isLoading.value = true;
+                            const response = await axios.get('https://api.fastbull.com/fastbull-news-service/api/getNewsPageByTagIds', {
+                                headers: { 'Content-Type': 'application/json', 'langId': 10 },
+                                params: { pageSize: 50 }  // Giảm từ 500 xuống 50 để load nhanh hơn
+                            });
+                            const newsData = JSON.parse(response.data.bodyMessage);
+                            fetchedNews.value = newsData;
+                            console.log('[News] Loaded:', newsData.pageDatas?.length);
+                        } catch (error) {
+                            console.error('[News] Error:', error);
+                        } finally {
+                            isLoading.value = false;
+                        }
+                    };
+                    const connectWebSocket = () => {
+                        socket.value = new WebSocket('wss://wsspush.fastbull.com/news?langId=10');
+                        socket.value.onopen = () => console.log('[News] WS opened');
+                        socket.value.onmessage = (event) => {
+                            if (event.data instanceof Blob) {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    const jsonData = JSON.parse(reader.result);
+                                    if (jsonData.messageInfo) {
+                                        fetchedNews.value.pageDatas.unshift(JSON.parse(jsonData.messageInfo));
+                                    }
+                                };
+                                reader.readAsText(event.data);
+                            } else {
+                                try {
+                                    const jsonData = JSON.parse(event.data);
+                                    fetchedNews.value.pageDatas.unshift(JSON.parse(jsonData.messageInfo));
+                                } catch (error) {
+                                    console.error('[News] Parse error:', error);
+                                }
+                            }
+                        };
+                        socket.value.onerror = (error) => console.error('[News] WS error:', error);
+                        socket.value.onclose = () => setTimeout(connectWebSocket, 5000);
+                    };
+                    onMounted(async () => {
+                        await fetchNews();
+                        connectWebSocket();
+                    });
+                    onBeforeUnmount(() => {
+                        if (socket.value) socket.value.close();
+                    });
+                    return { fetchedNews, formatDate, isLoading };
+                }
+            }).mount('#appNews');
+            console.log('[News] Mounted');
+        } catch (e) {
+            console.error('[News] Mount error:', e);
+        }
+    }
+    } else {
+        console.error('Vue not available!');
+    }
+});
+</script>
 
 </body>
 </html>

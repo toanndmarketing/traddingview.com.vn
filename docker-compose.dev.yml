@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ghost-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ghostproduction
+      MYSQL_USER: ghost-814
+      MYSQL_PASSWORD: devpassword123
+    volumes:
+      - mysql_data_dev:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=512M
+      - --innodb-log-file-size=256M
+      - --innodb-redo-log-capacity=1G
+      - --innodb-flush-log-at-trx-commit=2
+      - --max-connections=100
+      - --table-open-cache=2000
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ghost-redis-dev
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data_dev:/data
+
+  ghost:
+    image: ghost:5.58.0-alpine
+    container_name: ghost-tradingview-dev
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      url: http://localhost:3000
+      admin__url: http://localhost:3000
+      database__client: mysql
+      database__connection__host: mysql
+      database__connection__user: ghost-814
+      database__connection__password: devpassword123
+      database__connection__database: ghostproduction
+    volumes:
+      - ./content:/var/lib/ghost/content
+    ports:
+      - "3000:2368"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:2368"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  mysql_data_dev:
+  redis_data_dev:

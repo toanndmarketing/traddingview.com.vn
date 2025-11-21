@@ -1,0 +1,62 @@
+<section class="gh-about-cta-copytrading">
+	<div id="appSentiment" class="relivate">
+       <div class="rounded-xl text-card-foreground border-0 bg-transparent shadow-none">
+          {{!-- Header Section --}}
+          <div class="flex flex-col gap-y-1.5 p-0 pb-4">
+             <h3 class="font-semibold leading-none tracking-tight">
+                <span class="flex items-center text-foreground/90 transition-colors flex content-center text-3xl xs:text-xl cursor-pointer">
+                Tâm lý thị trường
+                </span>
+             </h3>
+          </div>
+          {{!-- Sentiments Card --}}
+          <div class="text-xl p-0 border rounded-md border-foreground/5">
+             {{!-- Table Header --}}
+             <div class="items-center p-2">
+                <div class="flex items-center justify-between font-semibold text-xl">
+                   <span class="text-foreground/90">Tài sản</span>
+                   <span class="text-foreground/90">Mua</span>
+                   <span class="text-foreground/90 pr-2">Bán</span>
+                </div>
+             </div>
+             {{!-- Separator --}}
+             <div data-orientation="horizontal" role="separator" class="shrink-0 bg-border h-px w-full border-foreground/5"></div>
+             <div class="relative overflow-hidden h-[560px] flex px-2" style="position: relative; --radix-scroll-area-corner-width: 0px; --radix-scroll-area-corner-height: 0px;">
+                <div data-radix-scroll-area-viewport="" class="h-full w-full rounded-[inherit]" tabindex="0" style="overflow: hidden scroll;">
+                   {{!-- Sentiments List --}}
+                   <div style="min-width: 100%; display: table;">
+                      <div class="space-y-2 px-0.5 py-2" v-for="sentiment in fetchedSentiments" :key="sentiment.pairId">
+                         <div class="flex justify-between items-center">
+                            {{!-- Asset Name --}}
+                            <p class="w-1/4 font-medium" v-html="sentiment.pairName"></p>
+                            {{!-- Sentiment Bars --}}
+                            <div class="w-3/4 flex text-primary-foreground text-xl font-semibold">
+                               <div class="bg-primary text-left p-0.5" :style="getStylePercent(sentiment)">
+                                  \{{ sentiment.longValue <= 0 ? '' : formatPercentage(sentiment.longValue) }}
+                               </div>
+                               <div class="bg-red-500 text-right p-0.5" :style="getStylePercent(sentiment, 'short')">
+                                  \{{ sentiment.shortValue <= 0 ? '' : formatPercentage(sentiment.shortValue) }}
+                               </div>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                   {{!-- Fallback Message --}}
+                   <div v-if="!fetchedSentiments.length" class="text-center text-gray-500">No data available.</div>
+                </div>
+             </div>
+          </div>
+       </div>
+    </div>
+
+    <style>
+    [data-radix-scroll-area-viewport] {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+        display: none;
+    }
+    </style>
+</section>
