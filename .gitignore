@@ -113,6 +113,7 @@ ghost-dev.db
 *.zip
 *.rar
 ghost_source_*.tar.gz
+ghost_source_no_images_*/
 
 # Backup files
 *.bak
