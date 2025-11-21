@@ -103,6 +103,16 @@ b, strong {
 }
 /***END STYLE ON INJECTION**/
 
+.gh-card-newfeed {
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    font-size: 1.35rem;
+    line-height: 1.4;
+    margin-top: 8px;
+    overflow-y: hidden;
+    text-align: justify;
+}
+
 .flex {
 	display: flex;
 }
