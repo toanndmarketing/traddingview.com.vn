@@ -1,8 +1,8 @@
 {
-  "url": "https://your-domain.com",
+  "url": "https://tradingview.com.vn",
   "server": {
-    "port": 2368,
-    "host": "127.0.0.1"
+    "port": 3000,
+    "host": "0.0.0.0"
   },
   "database": {
     "client": "mysql",
@@ -33,9 +33,23 @@
       "stdout"
     ]
   },
-  "process": "systemd",
+  "process": "local",
   "paths": {
-    "contentPath": "/path/to/ghost/content"
+    "contentPath": "/var/lib/ghost/content"
+  },
+  "caching": {
+    "frontend": {
+      "maxAge": 600
+    },
+    "301": {
+      "maxAge": 31536000
+    }
+  },
+  "privacy": {
+    "useUpdateCheck": false,
+    "useGravatar": false,
+    "useRpcPing": false,
+    "useStructuredData": true
   },
   "storage": {
     "active": "s3",
