@@ -36,10 +36,14 @@ function pagination(isInfinite = true, done, isMasonry = false) {
             const postElements = doc.querySelectorAll('.gh-feed:not(.gh-featured):not(.gh-related) > *');
             console.log('[Pagination] Found posts:', postElements.length);
             
+            // Limit to 10 items per load
+            const limitedPosts = Array.from(postElements).slice(0, 10);
+            console.log('[Pagination] Loading posts:', limitedPosts.length);
+            
             const fragment = document.createDocumentFragment();
             const elems = [];
 
-            postElements.forEach(function (post) {
+            limitedPosts.forEach(function (post) {
                 var clonedItem = document.importNode(post, true);
 
                 if (isMasonry) {
