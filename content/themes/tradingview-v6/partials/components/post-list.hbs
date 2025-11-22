@@ -28,6 +28,9 @@
                             {{/foreach}}
                         {{/get}}
                     {{/match}}
+                    {{#foreach posts}}
+                        {{> "post-card" lazyLoad=true}}
+                    {{/foreach}}
                 {{/match}}
 
                 {{!-- All posts --}}
