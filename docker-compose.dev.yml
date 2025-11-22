@@ -56,6 +56,8 @@ services:
       database__connection__database: ghostproduction
     volumes:
       - ./content:/var/lib/ghost/content
+      - /var/lib/ghost/content/themes/tradingview-v6/node_modules
+      - ./config.docker.dev.json:/var/lib/ghost/config.production.json:ro
     ports:
       - "3000:2368"
     healthcheck:
