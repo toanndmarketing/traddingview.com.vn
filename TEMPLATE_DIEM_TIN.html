@@ -1,0 +1,90 @@
+<!-- 
+    MÃ TEMPLATE CHO TRANG ĐIỂM TIN 247
+    Copy toàn bộ code dưới đây vào Ghost Admin -> Page "Điểm Tin" -> Content (HTML mode)
+-->
+
+<div id="app" class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Điểm Tin 247</h1>
+    <p class="text-gray-600 mb-8">Theo dõi thông tin thị trường Tài Chính</p>
+    
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <p class="mt-4">Đang tải dữ liệu...</p>
+    </div>
+    
+    <!-- Error State -->
+    <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        {{ error }}
+    </div>
+    
+    <!-- Data Display -->
+    <div v-else>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div v-for="item in items" :key="item.id" class="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <h3 class="text-xl font-semibold mb-2">{{ item.title }}</h3>
+                <p class="text-gray-600 text-sm mb-4">{{ item.date }}</p>
+                <p class="text-gray-800">{{ item.description }}</p>
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div v-if="items.length === 0" class="text-center py-12 text-gray-500">
+            Chưa có dữ liệu
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { createApp, ref, onMounted } from 'vue';
+    
+    createApp({
+        setup() {
+            const loading = ref(true);
+            const error = ref(null);
+            const items = ref([]);
+            
+            // Hàm fetch dữ liệu - thay đổi URL API của bạn
+            const fetchData = async () => {
+                try {
+                    loading.value = true;
+                    error.value = null;
+                    
+                    // THAY ĐỔI URL API CỦA BẠN Ở ĐÂY
+                    const response = await fetch('YOUR_API_URL_HERE');
+                    
+                    if (!response.ok) {
+                        throw new Error('Không thể tải dữ liệu');
+                    }
+                    
+                    const data = await response.json();
+                    items.value = data;
+                    
+                } catch (err) {
+                    error.value = err.message;
+                    console.error('Error fetching data:', err);
+                } finally {
+                    loading.value = false;
+                }
+            };
+            
+            // Load dữ liệu khi component mount
+            onMounted(() => {
+                fetchData();
+            });
+            
+            return {
+                loading,
+                error,
+                items
+            };
+        }
+    }).mount('#app');
+</script>
+
+<style>
+    /* Custom styles nếu cần */
+    #app {
+        min-height: 400px;
+    }
+</style>

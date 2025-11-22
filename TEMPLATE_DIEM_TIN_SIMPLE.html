@@ -1,0 +1,215 @@
+<!-- Code để nhúng vào Ghost Page Content (HTML block) -->
+<div id="app" class="diem-tin-container">
+    <div class="diem-tin-wrapper">
+        
+        <!-- Header với button toggle -->
+        <header class="mb-4 flex justify-end">
+            <button @click="handleToggleTopNews" 
+                    class="px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <span v-text="showOnlyTopNews ? 'Tất cả tin' : 'Xem Tin Top'"></span>
+            </button>
+        </header>
+        
+        <!-- News Feed -->
+        <div class="news-feed-container" style="max-height: 800px; overflow-y: auto; padding-right: 20px;">
+            <div v-for="newsItem in fetchedNews.pageDatas" 
+                 :key="newsItem.newsId"
+                 class="news-item">
+                <p class="time-newfeed" v-text="formatDate(newsItem.releasedDate)"></p>
+                <div :class="newsItem.important ? 'text-red-500 font-medium' : ''"
+                     class="font-normal break-words overflow-hidden text-justify"
+                     v-text="newsItem.newsTitle"></div>
+            </div>
+            
+            <!-- Loading State -->
+            <div v-if="fetchedNews.pageDatas.length === 0" class="text-center py-12 text-gray-500">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                <p>Đang tải tin tức...</p>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Load dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<script>
+const { createApp, ref, onMounted, onBeforeUnmount } = Vue;
+
+// Format date helper
+const formatDate = (timestamp, dateFormat = 'dd-MM-yyyy HH:mm:ss') => {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+        return '';
+    }
+    return dateFns.format(date, dateFormat);
+};
+
+createApp({
+    setup() {
+        const socket = ref(null);
+        const fetchedNews = ref({ pageDatas: [] });
+        const showOnlyTopNews = ref(false);
+
+        const config = {
+            apiFastBull: 'https://api.fastbull.com',
+            wssFastBull: 'wss://wsspush.fastbull.com'
+        };
+
+        // Fetch tin tức
+        const fetchNews = async (isTopNews = false) => {
+            try {
+                const response = await axios.get(`${config.apiFastBull}/fastbull-news-service/api/getNewsPageByTagIds`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'langId': 10
+                    },
+                    params: {
+                        pageSize: 500,
+                        ...(isTopNews && { checkImportant: 1 })
+                    }
+                });
+                const newsData = JSON.parse(response.data.bodyMessage);
+                fetchedNews.value = newsData;
+                console.log('Loaded news:', newsData.pageDatas.length);
+                return newsData;
+            } catch (error) {
+                console.error('Error fetching news:', error);
+                return { pageDatas: [] };
+            }
+        };
+
+        const handleToggleTopNews = () => {
+            showOnlyTopNews.value = !showOnlyTopNews.value;
+            fetchNews(showOnlyTopNews.value);
+        };
+
+        // Khởi tạo WebSocket
+        const connectWebSocket = () => {
+            socket.value = new WebSocket(`${config.wssFastBull}/news?langId=10`);
+
+            socket.value.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            socket.value.onmessage = (event) => {
+                let newData;
+                if (event.data instanceof Blob) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const jsonData = JSON.parse(reader.result);
+                        if (jsonData.messageInfo) {
+                            newData = JSON.parse(jsonData.messageInfo);
+                            fetchedNews.value.pageDatas.unshift(newData);
+                        }
+                    };
+                    reader.readAsText(event.data);
+                } else {
+                    try {
+                        const jsonData = JSON.parse(event.data);
+                        newData = JSON.parse(jsonData.messageInfo);
+                        fetchedNews.value.pageDatas.unshift(newData);
+                    } catch (error) {
+                        console.error('Error parsing data:', error);
+                    }
+                }
+            };
+
+            socket.value.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            socket.value.onclose = () => {
+                console.log('WebSocket closed, reconnecting...');
+                setTimeout(connectWebSocket, 5000);
+            };
+        };
+
+        // Lifecycle hooks
+        onMounted(async () => {
+            console.log('Vue app mounted');
+            await fetchNews(showOnlyTopNews.value);
+            connectWebSocket();
+        });
+
+        onBeforeUnmount(() => {
+            if (socket.value) {
+                socket.value.close();
+            }
+        });
+
+        return {
+            fetchedNews,
+            formatDate,
+            showOnlyTopNews,
+            handleToggleTopNews
+        };
+    }
+}).mount('#app');
+</script>
+
+<style>
+.diem-tin-container {
+    width: 100%;
+    position: relative;
+    min-height: 400px;
+}
+
+.diem-tin-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.news-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: box-shadow 0.3s;
+}
+
+.news-item:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.time-newfeed {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.news-feed-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.news-feed-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.news-feed-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.news-feed-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+</style>
