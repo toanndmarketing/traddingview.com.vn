@@ -3369,26 +3369,25 @@ figcaption a {
 /* ---------------------------------------------------------- */
 
 /* Parent menu item with submenu */
-.nav li.has-submenu { 
+.nav li.has-submenu {
     position: relative;
 }
 
-/* Dropdown arrow indicator */
-.nav li.has-submenu > a::after { 
-    content: '▾';
-    margin-left: 6px;
-    font-size: 12px;
-    transition: transform 0.2s ease;
+/* Dropdown icon (created by JS) */
+.dropdown-icon {
     display: inline-block;
+    margin-left: 4px;
+    vertical-align: middle;
+    transition: transform 0.2s ease;
 }
 
-/* Rotate arrow when submenu is open */
-.nav li.has-submenu.submenu-open > a::after { 
-    transform: rotate(180deg); 
+/* Rotate icon when submenu is open */
+.has-submenu.submenu-open .dropdown-icon {
+    transform: rotate(180deg);
 }
 
 /* Submenu container */
-.gh-submenu { 
+.dropdown-menu {
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
@@ -3407,22 +3406,22 @@ figcaption a {
 }
 
 /* Show submenu on parent hover/open */
-.has-submenu.submenu-open .gh-submenu,
-.has-submenu:hover .gh-submenu { 
+.has-submenu.submenu-open .dropdown-menu,
+.has-submenu:hover .dropdown-menu {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
 }
 
 /* Submenu item */
-.gh-submenu-item { 
+.dropdown-menu .nav-item {
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
 /* Submenu link */
-.gh-submenu-item a { 
+.dropdown-menu .nav-link {
     display: block;
     padding: 10px 20px;
     color: #15171a;
@@ -3434,20 +3433,20 @@ figcaption a {
 }
 
 /* Submenu link hover */
-.gh-submenu-item a:hover { 
+.dropdown-menu .nav-link:hover {
     background-color: #f5f5f5;
     color: var(--ghost-accent-color, #FD9220);
 }
 
 /* Active submenu item */
-.gh-submenu-item a.active,
-.gh-submenu-item a.current { 
+.dropdown-menu .nav-link.active,
+.dropdown-menu .nav-link.current {
     color: var(--ghost-accent-color, #FD9220);
     font-weight: 600;
 }
 
 /* Prevent submenu from closing when hovering over it */
-.gh-submenu:hover {
+.dropdown-menu:hover {
     opacity: 1;
     visibility: visible;
 }
@@ -3462,16 +3461,16 @@ figcaption a {
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-    .gh-submenu {
+    .dropdown-menu {
         background: #1a1a1a;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
-    
-    .gh-submenu-item a {
+
+    .dropdown-menu .nav-link {
         color: #e5e5e5;
     }
-    
-    .gh-submenu-item a:hover {
+
+    .dropdown-menu .nav-link:hover {
         background-color: #2a2a2a;
         color: #ffffff;
     }
@@ -3480,7 +3479,7 @@ figcaption a {
 /* Tablet and Mobile Responsive */
 @media (max-width: 767px) {
     /* Change submenu to accordion style on mobile */
-    .gh-submenu {
+    .dropdown-menu {
         position: static;
         margin: 8px 0;
         padding: 0;
@@ -3494,38 +3493,32 @@ figcaption a {
         transform: none;
         transition: max-height 0.3s ease;
     }
-    
+
     /* Expand submenu when open */
-    .has-submenu.submenu-open .gh-submenu {
+    .has-submenu.submenu-open .dropdown-menu {
         max-height: 500px;
     }
-    
+
     /* Mobile submenu items */
-    .gh-submenu-item a {
+    .dropdown-menu .nav-link {
         padding: 12px 20px 12px 40px;
         font-size: 15px;
         color: rgba(255, 255, 255, 0.9);
         border-left: 2px solid transparent;
     }
-    
+
     /* Mobile hover/active state */
-    .gh-submenu-item a:hover,
-    .gh-submenu-item a.active {
+    .dropdown-menu .nav-link:hover,
+    .dropdown-menu .nav-link.active {
         background-color: rgba(255, 255, 255, 0.1);
         color: #ffffff;
         border-left-color: var(--ghost-accent-color, #FD9220);
-    }
-    
-    /* Arrow position on mobile */
-    .nav li.has-submenu > a::after {
-        float: right;
-        margin-top: 2px;
     }
 }
 
 /* Tablet */
 @media (min-width: 768px) and (max-width: 1023px) {
-    .gh-submenu {
+    .dropdown-menu {
         min-width: 200px;
         font-size: 13px;
     }

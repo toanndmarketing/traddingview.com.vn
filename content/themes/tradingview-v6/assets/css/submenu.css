@@ -1,9 +1,9 @@
 /* Submenu Styles */
-.nav-item.has-submenu {
+.has-submenu {
     position: relative;
 }
 
-.dropdown-icon {
+.has-submenu .dropdown-icon {
     display: inline-block;
     margin-left: 6px;
     transition: transform 0.3s ease;
@@ -11,7 +11,7 @@
     opacity: 0.7;
 }
 
-.dropdown-menu {
+.has-submenu .dropdown-menu {
     display: none;
     position: absolute;
     top: 100%;
@@ -39,11 +39,11 @@
     }
 }
 
-.nav-item.has-submenu:hover .dropdown-menu {
+.has-submenu:hover .dropdown-menu {
     display: block;
 }
 
-.nav-item.has-submenu:hover .dropdown-icon {
+.has-submenu:hover .dropdown-icon {
     transform: rotate(180deg);
     opacity: 1;
 }

@@ -38,34 +38,40 @@
      */
     function initSubmenu() {
         const nav = document.querySelector('#navigation');
-        
+        const navHeader = document.querySelector('.gh-navigation');
+
         if (!nav) {
             console.warn('[Submenu] Navigation element not found');
             return;
         }
-        
+
         // Process each navigation item
         nav.querySelectorAll('li').forEach(function(item) {
             const link = item.querySelector('a');
             if (!link) return;
-            
+
             const href = link.getAttribute('href') || '';
             const text = link.textContent.trim().toLowerCase();
             const itemClasses = item.className;
-            
+
             // Check if this item should have a submenu
             Object.keys(submenuData).forEach(function(key) {
-                const isMatch = 
+                const isMatch =
                     itemClasses.includes('nav-' + key) ||
                     href.includes('/' + key + '/') ||
                     href === '#' + key ||
                     text.includes(key.replace(/-/g, ' '));
-                
+
                 if (isMatch && submenuData[key]) {
                     createSubmenu(item, link, submenuData[key], key);
                 }
             });
         });
+
+        // Mark navigation as loaded to show menu items
+        if (navHeader) {
+            navHeader.classList.add('is-dropdown-loaded');
+        }
     }
     
     /**
@@ -76,19 +82,21 @@
      * @param {string} key - Menu identifier
      */
     function createSubmenu(parentItem, parentLink, items, key) {
+        // Prevent duplicate submenu creation
+        if (parentItem.classList.contains('has-submenu') || parentItem.querySelector('.dropdown-menu')) {
+            console.log('⚠️ Submenu already exists for:', parentLink.textContent.trim());
+            return;
+        }
+
+        const iconHTML = '<svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+        
         // Add class to parent
         parentItem.classList.add('has-submenu');
         
-        // Add dropdown icon after link text
-        const dropdownIcon = document.createElement('svg');
-        dropdownIcon.className = 'dropdown-icon';
-        dropdownIcon.setAttribute('width', '12');
-        dropdownIcon.setAttribute('height', '12');
-        dropdownIcon.setAttribute('viewBox', '0 0 12 12');
-        dropdownIcon.setAttribute('fill', 'none');
-        dropdownIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        dropdownIcon.innerHTML = '<path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>';
-        parentLink.parentNode.insertBefore(dropdownIcon, parentLink.nextSibling);
+        // Add dropdown icon after link (insert into parent li)
+        if (!parentItem.querySelector('.dropdown-icon')) {
+            parentLink.insertAdjacentHTML('afterend', iconHTML);
+        }
         
         // Create submenu container
         const submenu = document.createElement('ul');
@@ -107,18 +115,27 @@
             
             const li = document.createElement('li');
             li.className = 'nav-item nav-' + slug;
-            
+
+            // Add empty text node for formatting
+            li.appendChild(document.createTextNode('\n\t\t\t'));
+
             const a = document.createElement('a');
             a.className = 'nav-link';
             a.href = subitem.url;
             a.textContent = subitem.label;
-            
+
             // Mark active submenu item
             if (window.location.pathname.includes(subitem.url)) {
                 a.classList.add('active');
             }
-            
+
             li.appendChild(a);
+
+            // Add line break and comment
+            li.appendChild(document.createTextNode('\n\n\t\t\t'));
+            li.appendChild(document.createComment(' Thêm dropdown menu cho mục "' + parentLink.textContent.trim() + '" '));
+            li.appendChild(document.createTextNode('\n\t\t'));
+
             submenu.appendChild(li);
         });
         
@@ -194,25 +211,26 @@
     
     /**
      * Re-initialize on navigation change (for SPA-like themes)
+     * Disabled to prevent duplicate submenu creation
      */
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList') {
-                const nav = document.querySelector('#navigation');
-                if (nav && !nav.querySelector('.has-submenu')) {
-                    initSubmenu();
-                }
-            }
-        });
-    });
-    
-    // Start observing
-    if (document.body) {
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    }
+    // const observer = new MutationObserver(function(mutations) {
+    //     mutations.forEach(function(mutation) {
+    //         if (mutation.type === 'childList') {
+    //             const nav = document.querySelector('#navigation');
+    //             if (nav && !nav.querySelector('.has-submenu')) {
+    //                 initSubmenu();
+    //             }
+    //         }
+    //     });
+    // });
+
+    // // Start observing
+    // if (document.body) {
+    //     observer.observe(document.body, {
+    //         childList: true,
+    //         subtree: true
+    //     });
+    // }
     
     console.log('[Submenu] Script loaded');
 })();

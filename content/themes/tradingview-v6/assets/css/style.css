@@ -335,6 +335,7 @@ b, strong {
     left: 0;
     list-style: none !important;
     margin: 0;
+    padding: 8px 0;
     background-color: #fff;
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -344,6 +345,7 @@ b, strong {
 
 .dropdown-menu li {
     padding: 0;
+    list-style: none !important;
 }
 
 .dropdown-menu a {
@@ -366,9 +368,27 @@ b, strong {
     color: #FD9220;
 }
 
-/* Hiển thị dropdown khi hover */
-.nav-item:hover .dropdown-menu {
+/* Hiển thị dropdown khi hover hoặc có class submenu-open */
+.has-submenu:hover .dropdown-menu,
+.has-submenu.submenu-open .dropdown-menu {
     display: block;
+}
+
+/* Style cho dropdown icon */
+.dropdown-icon {
+    display: inline-block;
+    margin-left: 4px;
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+}
+
+.has-submenu.submenu-open .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+/* Position relative cho parent item */
+.has-submenu {
+    position: relative;
 }
 
 /* Responsive */
