@@ -43,6 +43,7 @@ content/files/
 content/apps/
 
 # Themes - Giữ lại themes tùy chỉnh, bỏ qua themes mặc định
+content/themes/casper
 content/themes/casper/
 content/themes/alto/
 content/themes/casper-v3/
