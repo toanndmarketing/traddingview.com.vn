@@ -56,6 +56,7 @@ createApp({
         const socket = ref(null);
         const fetchedNews = ref({ pageDatas: [] });
         const showOnlyTopNews = ref(false);
+        const refreshInterval = ref(null);
 
         const config = {
             apiFastBull: 'https://api.fastbull.com',
@@ -99,24 +100,55 @@ createApp({
             };
 
             socket.value.onmessage = (event) => {
-                let newData;
                 if (event.data instanceof Blob) {
                     const reader = new FileReader();
                     reader.onload = () => {
-                        const jsonData = JSON.parse(reader.result);
-                        if (jsonData.messageInfo) {
-                            newData = JSON.parse(jsonData.messageInfo);
-                            fetchedNews.value.pageDatas.unshift(newData);
+                        try {
+                            const text = reader.result;
+                            // Bỏ qua heartbeat messages (chỉ là số)
+                            if (!isNaN(text) && text.trim().length < 5) {
+                                console.log('Heartbeat:', text);
+                                return;
+                            }
+                            
+                            const jsonData = JSON.parse(text);
+                            console.log('Parsed Blob data:', jsonData);
+                            
+                            if (jsonData.messageInfo) {
+                                const newData = JSON.parse(jsonData.messageInfo);
+                                console.log('New news item:', newData);
+                                fetchedNews.value.pageDatas.unshift(newData);
+                            } else if (jsonData.newsTitle) {
+                                // Trường hợp data trực tiếp là tin tức
+                                console.log('Direct news item:', jsonData);
+                                fetchedNews.value.pageDatas.unshift(jsonData);
+                            }
+                        } catch (error) {
+                            console.error('Error parsing Blob:', error, reader.result);
                         }
                     };
                     reader.readAsText(event.data);
                 } else {
                     try {
+                        // Bỏ qua heartbeat
+                        if (!isNaN(event.data) && event.data.trim().length < 5) {
+                            console.log('Heartbeat:', event.data);
+                            return;
+                        }
+                        
                         const jsonData = JSON.parse(event.data);
-                        newData = JSON.parse(jsonData.messageInfo);
-                        fetchedNews.value.pageDatas.unshift(newData);
+                        console.log('Parsed string data:', jsonData);
+                        
+                        if (jsonData.messageInfo) {
+                            const newData = JSON.parse(jsonData.messageInfo);
+                            console.log('New news item:', newData);
+                            fetchedNews.value.pageDatas.unshift(newData);
+                        } else if (jsonData.newsTitle) {
+                            console.log('Direct news item:', jsonData);
+                            fetchedNews.value.pageDatas.unshift(jsonData);
+                        }
                     } catch (error) {
-                        console.error('Error parsing data:', error);
+                        console.error('Error parsing string:', error, event.data);
                     }
                 }
             };
@@ -136,11 +168,20 @@ createApp({
             console.log('Vue app mounted');
             await fetchNews(showOnlyTopNews.value);
             connectWebSocket();
+            
+            // Auto refresh mỗi 30 giây nếu WebSocket không hoạt động
+            refreshInterval.value = setInterval(async () => {
+                console.log('Auto refreshing news...');
+                await fetchNews(showOnlyTopNews.value);
+            }, 30000); // 30 giây
         });
 
         onBeforeUnmount(() => {
             if (socket.value) {
                 socket.value.close();
+            }
+            if (refreshInterval.value) {
+                clearInterval(refreshInterval.value);
             }
         });
 

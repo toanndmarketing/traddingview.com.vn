@@ -86,15 +86,19 @@
             return;
         }
 
-        const iconHTML = '<svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+        const iconHTML = '<svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
         
         // Add class to parent
         parentItem.classList.add('has-submenu');
+        parentItem.setAttribute('data-submenu-key', key);
         
         // Add dropdown icon after link (insert into parent li)
         if (!parentItem.querySelector('.dropdown-icon')) {
             parentLink.insertAdjacentHTML('afterend', iconHTML);
         }
+        
+        // Get the icon element
+        const dropdownIcon = parentItem.querySelector('.dropdown-icon');
         
         // Create submenu container
         const submenu = document.createElement('ul');
@@ -122,9 +126,16 @@
             a.href = subitem.url;
             a.textContent = subitem.label;
 
-            // Mark active submenu item
-            if (window.location.pathname.includes(subitem.url)) {
+            // Mark active submenu item - check both pathname and href
+            const currentPath = window.location.pathname;
+            const itemPath = subitem.url;
+            
+            // Check if current page matches this submenu item
+            if (currentPath === itemPath || 
+                currentPath.startsWith(itemPath) || 
+                (itemPath.includes('/tag/') && currentPath.includes(itemPath))) {
                 a.classList.add('active');
+                console.log('Active submenu item:', subitem.label, 'Path:', itemPath);
             }
 
             li.appendChild(a);
@@ -149,10 +160,11 @@
             parentItem.classList.remove('submenu-open');
         });
         
-        // Mobile: Toggle on click
-        parentLink.addEventListener('click', function(e) {
+        // Mobile: Toggle on click (both link and icon)
+        const handleMobileToggle = function(e) {
             if (isMobile()) {
                 e.preventDefault();
+                e.stopPropagation();
                 
                 // Close other open submenus
                 document.querySelectorAll('.has-submenu.submenu-open').forEach(function(openItem) {
@@ -161,17 +173,37 @@
                     }
                 });
                 
-                // Toggle current submenu
+                // Toggle current submenu with smooth transition
+                const wasOpen = parentItem.classList.contains('submenu-open');
                 parentItem.classList.toggle('submenu-open');
+                
+                // Add animation class
+                if (!wasOpen) {
+                    submenu.style.display = 'block';
+                    requestAnimationFrame(() => {
+                        submenu.classList.add('is-animating');
+                    });
+                } else {
+                    submenu.classList.remove('is-animating');
+                }
             }
-        });
+        };
         
-        // Close submenu when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!parentItem.contains(e.target) && isMobile()) {
+        // Attach click event to both link and icon
+        parentLink.addEventListener('click', handleMobileToggle);
+        if (dropdownIcon) {
+            dropdownIcon.addEventListener('click', handleMobileToggle);
+        }
+        
+        // Close submenu when clicking outside (only on mobile)
+        const handleOutsideClick = function(e) {
+            if (!parentItem.contains(e.target) && isMobile() && parentItem.classList.contains('submenu-open')) {
                 parentItem.classList.remove('submenu-open');
+                submenu.classList.remove('is-animating');
             }
-        });
+        };
+        
+        document.addEventListener('click', handleOutsideClick);
     }
     
     /**
