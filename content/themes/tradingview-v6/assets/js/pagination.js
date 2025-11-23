@@ -79,15 +79,8 @@ function pagination(isInfinite = true, done, isMasonry = false) {
 
         loading = true;
 
-        if (entries[0].isIntersecting) {
-            // keep loading next page until target is out of the viewport or we've loaded the last page
-            if (!isMasonry) {
-                while (target.getBoundingClientRect().top <= window.innerHeight && document.querySelector('link[rel=next]')) {
-                    await loadNextPage();
-                }
-            } else {
-                await loadNextPage();
-            }
+        if (entries[0].isIntersecting && document.querySelector('link[rel=next]')) {
+            await loadNextPage();
         }
 
         loading = false;
