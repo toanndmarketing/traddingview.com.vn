@@ -10,10 +10,10 @@
              </h3>
           </div>
           {{!-- Sentiments Card --}}
-          <div class="text-xl p-0 border rounded-md border-foreground/5">
+          <div class="p-0 border rounded-md border-foreground/5">
              {{!-- Table Header --}}
              <div class="items-center p-2">
-                <div class="flex items-center justify-between font-semibold text-xl">
+                <div class="flex items-center justify-between font-semibold">
                    <span class="text-foreground/90">Tài sản</span>
                    <span class="text-foreground/90">Mua</span>
                    <span class="text-foreground/90 pr-2">Bán</span>
@@ -30,7 +30,7 @@
                             {{!-- Asset Name --}}
                             <p class="w-1/4 font-medium" v-html="sentiment.pairName"></p>
                             {{!-- Sentiment Bars --}}
-                            <div class="w-3/4 flex text-primary-foreground text-xl font-semibold">
+                            <div class="w-3/4 flex text-primary-foreground font-semibold">
                                <div class="bg-primary text-left p-0.5" :style="getStylePercent(sentiment)">
                                   \{{ sentiment.longValue <= 0 ? '' : formatPercentage(sentiment.longValue) }}
                                </div>

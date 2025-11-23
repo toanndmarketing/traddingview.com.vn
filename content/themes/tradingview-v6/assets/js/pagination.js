@@ -1,44 +1,34 @@
 function pagination(isInfinite = true, done, isMasonry = false) {
     const feedElement = document.querySelector('.gh-feed');
-    console.log('[Pagination] Feed element:', feedElement);
     
     if (!feedElement) {
-        console.warn('[Pagination] No feed element found');
         return;
     }
 
     let loading = false;
     const target = feedElement.nextElementSibling || document.querySelector('.gh-footer');
     const buttonElement = document.querySelector('.gh-loadmore');
-    
-    console.log('[Pagination] Target:', target);
-    console.log('[Pagination] Next link:', document.querySelector('link[rel=next]'));
 
     if (!document.querySelector('link[rel=next]') && buttonElement) {
         buttonElement.remove();
     }
 
     const loadNextPage = async function () {
-        console.log('[Pagination] Loading next page...');
         const nextElement = document.querySelector('link[rel=next]');
         if (!nextElement) {
-            console.warn('[Pagination] No next link found');
             return;
         }
 
         try {
-            console.log('[Pagination] Fetching:', nextElement.href);
             const res = await fetch(nextElement.href);
             const html = await res.text();
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
 
             const postElements = doc.querySelectorAll('.gh-feed:not(.gh-featured):not(.gh-related) > *');
-            console.log('[Pagination] Found posts:', postElements.length);
             
             // Limit to 10 items per load
             const limitedPosts = Array.from(postElements).slice(0, 10);
-            console.log('[Pagination] Loading posts:', limitedPosts.length);
             
             const fragment = document.createDocumentFragment();
             const elems = [];
@@ -55,7 +45,6 @@ function pagination(isInfinite = true, done, isMasonry = false) {
             });
 
             feedElement.appendChild(fragment);
-            console.log('[Pagination] Posts appended');
 
             if (done) {
                 done(elems, loadNextWithCheck);
@@ -85,15 +74,12 @@ function pagination(isInfinite = true, done, isMasonry = false) {
 
     const callback = async function (entries) {
         if (loading) {
-            console.log('[Pagination] Already loading, skip');
             return;
         }
 
         loading = true;
-        console.log('[Pagination] Intersection callback triggered');
 
         if (entries[0].isIntersecting) {
-            console.log('[Pagination] Target is intersecting');
             // keep loading next page until target is out of the viewport or we've loaded the last page
             if (!isMasonry) {
                 while (target.getBoundingClientRect().top <= window.innerHeight && document.querySelector('link[rel=next]')) {
@@ -107,7 +93,6 @@ function pagination(isInfinite = true, done, isMasonry = false) {
         loading = false;
 
         if (!document.querySelector('link[rel=next]')) {
-            console.log('[Pagination] No more pages, disconnecting observer');
             observer.disconnect();
         }
     };
@@ -115,10 +100,8 @@ function pagination(isInfinite = true, done, isMasonry = false) {
     const observer = new IntersectionObserver(callback);
 
     if (isInfinite) {
-        console.log('[Pagination] Observing target for infinite scroll');
         observer.observe(target);
     } else {
-        console.log('[Pagination] Button mode enabled');
         buttonElement.addEventListener('click', loadNextPage);
     }
 }

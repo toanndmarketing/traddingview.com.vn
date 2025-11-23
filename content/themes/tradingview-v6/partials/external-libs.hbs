@@ -8,12 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
 
 <script>
-// Verify libraries loaded
-console.log('=== Libraries Check ===');
-console.log('Vue loaded:', typeof Vue !== 'undefined');
-console.log('axios loaded:', typeof axios !== 'undefined');
-console.log('dateFns loaded:', typeof dateFns !== 'undefined');
-
 // Make Vue helpers globally available
 if (typeof Vue !== 'undefined') {
     window.VueHelpers = {
@@ -22,6 +16,5 @@ if (typeof Vue !== 'undefined') {
         onBeforeUnmount: Vue.onBeforeUnmount,
         createApp: Vue.createApp
     };
-    console.log('Vue helpers ready');
 }
 </script>

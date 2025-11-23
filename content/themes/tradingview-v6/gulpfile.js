@@ -56,6 +56,20 @@ function css(done) {
     ], handleError(done));
 }
 
+function tailwind(done) {
+    const tailwindcss = require('tailwindcss');
+    pump([
+        src('assets/css/tailwind.css'),
+        postcss([
+            tailwindcss('./tailwind.config.js'),
+            autoprefixer(),
+            cssnano()
+        ]),
+        dest('assets/built/'),
+        livereload()
+    ], handleError(done));
+}
+
 function js(done) {
     pump([
         src([
@@ -88,10 +102,11 @@ function zipper(done) {
 }
 
 const cssWatcher = () => watch('assets/css/**', css);
+const tailwindWatcher = () => watch(['assets/css/tailwind.css', 'tailwind.config.js', '**/*.hbs'], tailwind);
 const jsWatcher = () => watch('assets/js/**', js);
 const hbsWatcher = () => watch(['*.hbs', 'partials/**/*.hbs'], hbs);
-const watcher = parallel(cssWatcher, jsWatcher, hbsWatcher);
-const build = series(css, js);
+const watcher = parallel(cssWatcher, tailwindWatcher, jsWatcher, hbsWatcher);
+const build = series(parallel(css, tailwind), js);
 
 exports.build = build;
 exports.zip = series(build, zipper);
