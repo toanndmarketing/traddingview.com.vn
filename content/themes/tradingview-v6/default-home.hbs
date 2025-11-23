@@ -195,29 +195,50 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     };
                     const connectWebSocket = () => {
+                        console.log('[News WS] Connecting to WebSocket...');
                         socket.value = new WebSocket('wss://wsspush.fastbull.com/news?langId=10');
-                        socket.value.onopen = () => {};
+                        socket.value.onopen = () => {
+                            console.log('[News WS] Connected successfully');
+                        };
                         socket.value.onmessage = (event) => {
+                            console.log('[News WS] Message received:', event.data);
                             if (event.data instanceof Blob) {
                                 const reader = new FileReader();
                                 reader.onload = () => {
-                                    const jsonData = JSON.parse(reader.result);
-                                    if (jsonData.messageInfo) {
-                                        fetchedNews.value.pageDatas.unshift(JSON.parse(jsonData.messageInfo));
+                                    try {
+                                        const jsonData = JSON.parse(reader.result);
+                                        console.log('[News WS] Parsed Blob data:', jsonData);
+                                        if (jsonData.messageInfo) {
+                                            const newsItem = JSON.parse(jsonData.messageInfo);
+                                            console.log('[News WS] New news item:', newsItem);
+                                            fetchedNews.value.pageDatas.unshift(newsItem);
+                                        }
+                                    } catch (error) {
+                                        console.error('[News WS] Error parsing Blob:', error);
                                     }
                                 };
                                 reader.readAsText(event.data);
                             } else {
                                 try {
                                     const jsonData = JSON.parse(event.data);
-                                    fetchedNews.value.pageDatas.unshift(JSON.parse(jsonData.messageInfo));
+                                    console.log('[News WS] Parsed text data:', jsonData);
+                                    if (jsonData.messageInfo) {
+                                        const newsItem = JSON.parse(jsonData.messageInfo);
+                                        console.log('[News WS] New news item:', newsItem);
+                                        fetchedNews.value.pageDatas.unshift(newsItem);
+                                    }
                                 } catch (error) {
-                                    // Silent error
+                                    console.error('[News WS] Error parsing text:', error);
                                 }
                             }
                         };
-                        socket.value.onerror = (error) => {};
-                        socket.value.onclose = () => setTimeout(connectWebSocket, 5000);
+                        socket.value.onerror = (error) => {
+                            console.error('[News WS] Error:', error);
+                        };
+                        socket.value.onclose = () => {
+                            console.log('[News WS] Disconnected, reconnecting in 5s...');
+                            setTimeout(connectWebSocket, 5000);
+                        };
                     };
                     onMounted(async () => {
                         await fetchNews();
