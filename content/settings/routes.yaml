@@ -8,3 +8,6 @@ collections:
 taxonomies:
   tag: /tag/{slug}/
   author: /author/{slug}/
+
+redirects:
+  /bieu-do-tradingview/: /bieu-do-tai-chinh/
