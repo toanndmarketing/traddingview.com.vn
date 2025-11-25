@@ -35,10 +35,6 @@
                         {{> "icons/lock"}}
                     {{/has}}
                 {{/unless}}
-                
-                {{#if primary_tag}}
-                    <span class="gh-card-author"><a href="{{primary_tag.url}}">{{primary_tag.name}}</a></span>
-                {{/if}}
 
                 <time class="gh-card-date" datetime="{{date format="YYYY-MM-DD"}}">{{date}}</time>
             </footer>
