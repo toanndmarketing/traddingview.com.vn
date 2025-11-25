@@ -36,7 +36,9 @@
                     {{/has}}
                 {{/unless}}
                 
-                <span class="gh-card-author">By {{#foreach authors}}{{#if @first}}{{name}}{{else}}, {{name}}{{/if}}{{/foreach}}</span>
+                {{#if primary_tag}}
+                    <span class="gh-card-category"><a href="{{primary_tag.url}}">{{primary_tag.name}}</a></span>
+                {{/if}}
 
                 <time class="gh-card-date" datetime="{{date format="YYYY-MM-DD"}}">{{date}}</time>
             </footer>
