@@ -71,7 +71,7 @@
         </section>
     {{/post}}
 
-    {{#get "posts" include="authors" filter="id:-{{post.id}}" limit="4" as | next|}}
+    {{#get "posts" include="authors" filter="tags:{{post.primary_tag.slug}}+id:-{{post.id}}" limit="4" order="published_at desc" as | next|}}
             {{#if next}}
             <section class="gh-container is-grid gh-outer post-template">
                 <div class="gh-container-inner gh-inner">

@@ -24,6 +24,8 @@ services:
       - --innodb-flush-log-at-trx-commit=2
       - --max-connections=200
       - --table-open-cache=4000
+      - --wait-timeout=86400
+      - --interactive-timeout=86400
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
       interval: 10s
