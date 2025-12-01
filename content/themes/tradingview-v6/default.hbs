@@ -163,139 +163,119 @@ document.addEventListener('DOMContentLoaded', function() {
                     const socket = ref(null);
                     const fetchedNews = ref({ pageDatas: [] });
                     const isLoading = ref(true);
-                    
+                    const refreshInterval = ref(null);
+
+                    const config = {
+                        apiFastBull: 'https://api.fastbull.com',
+                        wssFastBull: 'wss://wsspush.fastbull.com'
+                    };
+
                     // Move formatDate inside setup to be available in template
                     const formatDate = (timestamp, dateFormat = 'dd-MM-yyyy HH:mm:ss') => {
                         const date = new Date(timestamp);
                         return isNaN(date.getTime()) ? '' : dateFns.format(date, dateFormat);
                     };
-                    
+
                     const fetchNews = async () => {
                         try {
-                            console.log('[News] 📥 Fetching initial news...');
-                            isLoading.value = true;
-                            const response = await axios.get('https://api.fastbull.com/fastbull-news-service/api/getNewsPageByTagIds', {
+                            const response = await axios.get(`${config.apiFastBull}/fastbull-news-service/api/getNewsPageByTagIds`, {
                                 headers: { 'Content-Type': 'application/json', 'langId': 10 },
-                                params: { pageSize: 50 }
+                                params: { pageSize: 500 }
                             });
-                            console.log('[News] Response:', response.data);
                             const newsData = JSON.parse(response.data.bodyMessage);
                             fetchedNews.value = newsData;
-                            console.log('[News] ✅ Loaded:', newsData.pageDatas?.length, 'items');
-                            console.log('[News] Sample item:', newsData.pageDatas?.[0]);
+                            console.log('[News] Loaded:', newsData.pageDatas?.length, 'items');
                         } catch (error) {
-                            console.error('[News] ❌ Fetch error:', error);
+                            console.error('[News] Error fetching:', error);
                         } finally {
                             isLoading.value = false;
                         }
                     };
                     const connectWebSocket = () => {
-                        socket.value = new WebSocket('wss://wsspush.fastbull.com/news?langId=10');
+                        socket.value = new WebSocket(`${config.wssFastBull}/news?langId=10`);
+
                         socket.value.onopen = () => {
-                            console.log('[News] ✅ WebSocket connected successfully');
-                            
-                            // TEST: Add a fake news after 3 seconds to verify Vue reactivity
-                            setTimeout(() => {
-                                console.log('[News] 🧪 TEST: Adding fake news item...');
-                                const fakeNews = {
-                                    newsId: 'test-' + Date.now(),
-                                    newsTitle: '🧪 TEST TIN THỬ NGHIỆM - ' + new Date().toLocaleTimeString(),
-                                    releasedDate: Date.now(),
-                                    important: true
-                                };
-                                fetchedNews.value.pageDatas.unshift(fakeNews);
-                                console.log('[News] 🧪 TEST: Fake news added. Total:', fetchedNews.value.pageDatas.length);
-                                console.log('[News] 🧪 TEST: Array is reactive?', Array.isArray(fetchedNews.value.pageDatas));
-                            }, 3000);
+                            console.log('[News] WebSocket connected');
                         };
+
                         socket.value.onmessage = (event) => {
                             if (event.data instanceof Blob) {
                                 const reader = new FileReader();
                                 reader.onload = () => {
                                     try {
-                                        const content = reader.result.trim();
-                                        
-                                        // Skip heartbeat/ping messages (just numbers)
-                                        if (/^\d+$/.test(content)) {
-                                            console.log('[News] 💓 Heartbeat:', content);
+                                        const text = reader.result;
+                                        // Bỏ qua heartbeat messages (chỉ là số)
+                                        if (!isNaN(text) && text.trim().length < 5) {
                                             return;
                                         }
-                                        
-                                        console.log('[News] 📨 Blob content:', content.substring(0, 200));
-                                        const jsonData = JSON.parse(content);
-                                        console.log('[News] 📦 Parsed JSON keys:', Object.keys(jsonData));
-                                        
+
+                                        const jsonData = JSON.parse(text);
+
                                         if (jsonData.messageInfo) {
-                                            let newsItem;
-                                            // Check if messageInfo is already an object or needs parsing
-                                            if (typeof jsonData.messageInfo === 'string') {
-                                                console.log('[News] 🔄 Parsing messageInfo string...');
-                                                newsItem = JSON.parse(jsonData.messageInfo);
-                                            } else {
-                                                console.log('[News] 📄 messageInfo is object');
-                                                newsItem = jsonData.messageInfo;
-                                            }
-                                            console.log('[News] 🆕 NEW ITEM FULL DATA:', JSON.stringify(newsItem, null, 2));
-                                            console.log('[News] 🔑 Item keys:', Object.keys(newsItem));
-                                            console.log('[News] 📝 Title:', newsItem.newsTitle || newsItem.title);
-                                            console.log('[News] 🆔 ID:', newsItem.newsId || newsItem.id);
-                                            console.log('[News] 📅 Date:', newsItem.releasedDate || newsItem.date);
-                                            
-                                            console.log('[News] 📊 BEFORE ADD - Array length:', fetchedNews.value.pageDatas.length);
-                                            fetchedNews.value.pageDatas.unshift(newsItem);
-                                            console.log('[News] 📊 AFTER ADD - Array length:', fetchedNews.value.pageDatas.length);
-                                            console.log('[News] ✅ ADDED! Total items:', fetchedNews.value.pageDatas.length);
-                                        } else {
-                                            console.warn('[News] ⚠️ No messageInfo. Keys:', Object.keys(jsonData));
+                                            const newData = JSON.parse(jsonData.messageInfo);
+                                            console.log('[News] New item:', newData.newsTitle);
+                                            fetchedNews.value.pageDatas.unshift(newData);
+                                        } else if (jsonData.newsTitle) {
+                                            // Trường hợp data trực tiếp là tin tức
+                                            console.log('[News] Direct item:', jsonData.newsTitle);
+                                            fetchedNews.value.pageDatas.unshift(jsonData);
                                         }
                                     } catch (error) {
-                                        console.error('[News] ❌ Blob parse error:', error, 'Content:', reader.result);
+                                        console.error('[News] Error parsing Blob:', error);
                                     }
                                 };
                                 reader.readAsText(event.data);
                             } else {
                                 try {
-                                    console.log('[News] Raw text data:', event.data);
+                                    // Bỏ qua heartbeat
+                                    if (!isNaN(event.data) && event.data.trim().length < 5) {
+                                        return;
+                                    }
+
                                     const jsonData = JSON.parse(event.data);
-                                    console.log('[News] Parsed JSON:', jsonData);
-                                    
+
                                     if (jsonData.messageInfo) {
-                                        let newsItem;
-                                        // Check if messageInfo is already an object or needs parsing
-                                        if (typeof jsonData.messageInfo === 'string') {
-                                            newsItem = JSON.parse(jsonData.messageInfo);
-                                        } else {
-                                            newsItem = jsonData.messageInfo;
-                                        }
-                                        console.log('[News] 🆕 New item:', newsItem);
-                                        fetchedNews.value.pageDatas.unshift(newsItem);
-                                        console.log('[News] ✅ Added to list. Total:', fetchedNews.value.pageDatas.length);
-                                    } else {
-                                        console.warn('[News] ⚠️ No messageInfo in data:', jsonData);
+                                        const newData = JSON.parse(jsonData.messageInfo);
+                                        console.log('[News] New item:', newData.newsTitle);
+                                        fetchedNews.value.pageDatas.unshift(newData);
+                                    } else if (jsonData.newsTitle) {
+                                        console.log('[News] Direct item:', jsonData.newsTitle);
+                                        fetchedNews.value.pageDatas.unshift(jsonData);
                                     }
                                 } catch (error) {
-                                    console.error('[News] ❌ Parse error:', error, 'Data:', event.data);
+                                    console.error('[News] Error parsing:', error);
                                 }
                             }
                         };
+
                         socket.value.onerror = (error) => {
-                            console.error('[News] ❌ WebSocket error:', error);
+                            console.error('[News] WebSocket error:', error);
                         };
-                        socket.value.onclose = (event) => {
-                            console.log('[News] ⚠️ WebSocket closed. Code:', event.code, 'Reason:', event.reason);
-                            console.log('[News] 🔄 Reconnecting in 5 seconds...');
+
+                        socket.value.onclose = () => {
+                            console.log('[News] WebSocket closed, reconnecting...');
                             setTimeout(connectWebSocket, 5000);
                         };
                     };
                     onMounted(async () => {
-                        console.log('[News] 🚀 Component mounted, starting initialization...');
+                        console.log('[News] Vue app mounted');
                         await fetchNews();
-                        console.log('[News] 📡 Connecting WebSocket...');
                         connectWebSocket();
+
+                        // Auto refresh mỗi 30 giây
+                        refreshInterval.value = setInterval(async () => {
+                            console.log('[News] Auto refreshing...');
+                            await fetchNews();
+                        }, 30000);
                     });
+
                     onBeforeUnmount(() => {
-                        console.log('[News] 🛑 Component unmounting, closing socket...');
-                        if (socket.value) socket.value.close();
+                        if (socket.value) {
+                            socket.value.close();
+                        }
+                        if (refreshInterval.value) {
+                            clearInterval(refreshInterval.value);
+                        }
                     });
                     return { fetchedNews, formatDate, isLoading };
                 }
