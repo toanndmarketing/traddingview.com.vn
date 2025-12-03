@@ -26,6 +26,7 @@ services:
       - --table-open-cache=4000
       - --wait-timeout=86400
       - --interactive-timeout=86400
+      - --max-allowed-packet=67108864
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
       interval: 10s
