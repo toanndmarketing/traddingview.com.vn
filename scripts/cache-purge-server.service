@@ -1,0 +1,21 @@
+[Unit]
+Description=Ghost Cache Purge Server
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/traddingview.com.vn/scripts
+ExecStart=/usr/bin/node /home/traddingview.com.vn/scripts/cache-purge-server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=WEBHOOK_SECRET=ghost-cache-purge-secret-2024
+
+# Logging
+StandardOutput=append:/var/log/cache-purge-server.log
+StandardError=append:/var/log/cache-purge-server.log
+
+[Install]
+WantedBy=multi-user.target
