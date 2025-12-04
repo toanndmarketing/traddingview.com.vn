@@ -116,14 +116,14 @@ const server = http.createServer((req, res) => {
     });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║        Ghost Cache Purge Server Started                    ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Port: ${PORT}                                                 ║
-║  Endpoint: http://127.0.0.1:${PORT}/purge                      ║
-║  Health: http://127.0.0.1:${PORT}/health                       ║
+║  Endpoint: POST http://SERVER_IP:${PORT}/purge                 ║
+║  Health: GET http://SERVER_IP:${PORT}/health                   ║
 ╚════════════════════════════════════════════════════════════╝
 
 Waiting for Ghost webhooks...
