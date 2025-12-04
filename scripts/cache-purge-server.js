@@ -3,34 +3,55 @@
  * 
  * Nhận webhook từ Ghost khi publish/update bài và tự động purge nginx cache
  * 
- * Chạy: node cache-purge-server.js
+ * Chạy trong Docker container, share volume với nginx cache
  * Port: 9000
  */
 
 const http = require('http');
 const { exec } = require('child_process');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 // Config
 const PORT = 9000;
 const SECRET = process.env.WEBHOOK_SECRET || 'ghost-cache-purge-secret-2024';
 
-// Nginx cache directory (trong docker container)
+// Nginx cache directory (shared volume với nginx container)
 const NGINX_CACHE_DIR = '/var/cache/nginx';
-const NGINX_CONTAINER = 'ghost-nginx';
 
-// Purge nginx cache
+// Purge nginx cache bằng cách xóa files trong shared volume
 function purgeNginxCache(callback) {
-    const cmd = `docker exec ${NGINX_CONTAINER} sh -c "rm -rf ${NGINX_CACHE_DIR}/* && nginx -s reload"`;
-    
-    exec(cmd, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`[ERROR] Purge failed: ${error.message}`);
-            callback(false, error.message);
+    // Đọc tất cả subdirectories và xóa
+    fs.readdir(NGINX_CACHE_DIR, (err, items) => {
+        if (err) {
+            console.error(`[ERROR] Cannot read cache dir: ${err.message}`);
+            callback(false, err.message);
             return;
         }
-        console.log(`[SUCCESS] Nginx cache purged at ${new Date().toISOString()}`);
-        callback(true, 'Cache purged successfully');
+
+        let deleted = 0;
+        const cacheSubdirs = items.filter(item => {
+            // Chỉ xóa các folder cache (0-9, a-f)
+            return /^[0-9a-f]$/.test(item);
+        });
+
+        if (cacheSubdirs.length === 0) {
+            console.log(`[INFO] Cache already empty`);
+            callback(true, 'Cache already empty');
+            return;
+        }
+
+        cacheSubdirs.forEach(dir => {
+            const dirPath = path.join(NGINX_CACHE_DIR, dir);
+            exec(`rm -rf ${dirPath}/*`, (error) => {
+                deleted++;
+                if (deleted === cacheSubdirs.length) {
+                    console.log(`[SUCCESS] Nginx cache purged at ${new Date().toISOString()}`);
+                    callback(true, `Purged ${deleted} cache directories`);
+                }
+            });
+        });
     });
 }
 
