@@ -91,7 +91,7 @@ services:
       - ./content:/var/lib/ghost/content
       - ./config.docker.json:/var/lib/ghost/config.production.json
     healthcheck:
-      test: [ "CMD-SHELL", "timeout 5 sh -c 'cat < /dev/null > /dev/tcp/127.0.0.1/3000' || exit 1" ]
+      test: [ "CMD", "nc", "-z", "127.0.0.1", "3000" ]
       interval: 30s
       timeout: 10s
       retries: 3
