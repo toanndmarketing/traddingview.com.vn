@@ -11,12 +11,12 @@ Workflow này kiểm tra:
 
 ---
 
-## Bước 1: Kiểm tra Database Optimization
+## Bước 1: Kiểm tra Database Optimization & Size
 
 // turbo
 ```bash
 ssh root@139.180.221.202 "docker exec ghost-mysql mysql -u ghost-814 -p6xJhHy7gsq61hTC3KdVq ghostproduction -e \"
-SELECT '=== DATABASE SIZE ===' as info;
+SELECT '=== TOP 10 TABLES BY SIZE ===' as info;
 SELECT 
     table_name,
     ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size (MB)',
@@ -26,16 +26,6 @@ FROM information_schema.TABLES
 WHERE table_schema = 'ghostproduction'
 ORDER BY (data_length + index_length) DESC
 LIMIT 10;
-
-SELECT '=== POSTS TABLE INDEXES ===' as info;
-SELECT 
-    INDEX_NAME,
-    GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) as COLUMNS,
-    INDEX_TYPE,
-    NON_UNIQUE
-FROM information_schema.STATISTICS
-WHERE TABLE_SCHEMA = 'ghostproduction' AND TABLE_NAME = 'posts'
-GROUP BY INDEX_NAME, INDEX_TYPE, NON_UNIQUE;
 
 SELECT '=== FRAGMENTATION CHECK ===' as info;
 SELECT 
@@ -48,14 +38,14 @@ WHERE table_schema = 'ghostproduction'
     AND data_free > 0
 ORDER BY data_free DESC;
 
-SELECT '=== SLOW QUERIES (if enabled) ===' as info;
-SELECT COUNT(*) as slow_query_count FROM mysql.slow_log;
+SELECT '=== ACTIONS LOG STATUS ===' as info;
+SELECT COUNT(*) as total_rows, MIN(created_at) as oldest_record FROM actions;
 \" 2>&1 | grep -v Warning"
 ```
 
 **Đánh giá:**
 - ✅ Fragmentation < 10% → OK
-- ⚠️ Fragmentation 10-20% → Cân nhắc optimize
+- ⚠️ fragmentation 10-20% hoặc actions > 500k rows → Cân nhắc optimize/cleanup
 - ❌ Fragmentation > 20% → Cần optimize ngay
 
 ---
@@ -99,7 +89,7 @@ ssh root@139.180.221.202 "cd /home/traddingview.com.vn ; echo '=== CONTAINER STA
 
 ## Bước 3: Kiểm tra Server Resources
 
-### 3.1 CPU & Memory Usage (htop alternative)
+### 3.1 CPU & Memory Usage
 
 // turbo
 ```bash
@@ -139,24 +129,20 @@ ssh root@139.180.221.202 "echo '=== ACTIVE CONNECTIONS ===' ; netstat -an | grep
 // turbo
 ```bash
 ssh root@139.180.221.202 "docker exec ghost-mysql mysql -u ghost-814 -p6xJhHy7gsq61hTC3KdVq ghostproduction -e \"
-SELECT '=== CURRENT CONNECTIONS ===' as info;
-SHOW PROCESSLIST;
-
-SELECT '=== CONNECTION STATS ===' as info;
-SHOW STATUS LIKE 'Threads_%';
+SELECT '=== BUFFER POOL SIZE ===' as info;
+SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
+SELECT '=== CONNECTION STATUS ===' as info;
+SHOW STATUS LIKE 'Threads_connected';
 SHOW STATUS LIKE 'Max_used_connections';
-
-SELECT '=== QUERY CACHE (if enabled) ===' as info;
-SHOW STATUS LIKE 'Qcache%';
-
-SELECT '=== INNODB STATUS ===' as info;
-SHOW STATUS LIKE 'Innodb_buffer_pool_%';
+SELECT '=== BUFFER POOL STATUS ===' as info;
+SHOW STATUS LIKE 'Innodb_buffer_pool_pages_data';
+SHOW STATUS LIKE 'Innodb_buffer_pool_pages_free';
 \" 2>&1 | grep -v Warning"
 ```
 
 **Đánh giá:**
-- ✅ Threads_connected < 50 → OK
-- ⚠️ Threads_connected 50-100 → Monitor
+- ✅ Threads_connected < 50, Buffer pool free > 0 → OK
+- ⚠️ Buffer pool free gần hết → Cân nhắc tăng RAM cho MySQL
 - ❌ Threads_connected > 100 → Cần tăng max_connections
 
 ---
@@ -165,70 +151,44 @@ SHOW STATUS LIKE 'Innodb_buffer_pool_%';
 
 // turbo
 ```bash
-ssh root@139.180.221.202 "echo '=== WEBSITE RESPONSE TIME ===' ; for i in {1..5}; do curl -s -o /dev/null -w \"Test \$i: %{http_code} - %{time_total}s\n\" http://localhost:3005 ; done"
+ssh root@139.180.221.202 "echo '=== WEBSITE RESPONSE TIME ===' ; for i in {1..3}; do time curl -s -o /dev/null http://localhost:3005 ; done"
 ```
 
 **Đánh giá:**
-- ✅ Response time < 2s → Excellent
-- ⚠️ Response time 2-5s → OK (có thể do cache miss)
-- ❌ Response time > 5s → Slow, cần optimize
+- ✅ Response time < 0.5s → Excellent
+- ⚠️ Response time 0.5-2s → OK
+- ❌ Response time > 2s → Slow, cần optimize
 
 ---
 
 ## Bước 6: Tổng hợp kết quả
 
-Sau khi chạy tất cả các bước trên, đánh giá:
-
-### ✅ Hệ thống HEALTHY nếu:
-- Database fragmentation < 10%
-- Không có ERROR logs trong 1h qua
-- CPU < 70%, RAM < 80%, Disk < 80%
-- MySQL connections < 50
-- Website response time < 2s
-
-### ⚠️ Cần MONITOR nếu:
-- Database fragmentation 10-20%
-- Có WARN logs nhưng không critical
-- CPU 70-90%, RAM 80-90%, Disk 80-90%
-- MySQL connections 50-100
-- Website response time 2-5s
-
-### ❌ Cần ACTION ngay nếu:
-- Database fragmentation > 20%
-- Có ERROR logs hoặc 5xx errors
-- CPU > 90%, RAM > 90%, Disk > 90%
-- MySQL connections > 100
-- Website response time > 5s
+Sau khi chạy tất cả các bước trên, đánh giá theo tiêu chuẩn trong workflow.
 
 ---
 
-## Actions nếu phát hiện vấn đề
+## Actions nếu phát hiện vấn đề (CẦN CONFIRM)
 
 ### Database fragmentation cao:
 ```bash
-ssh root@139.180.221.202
-docker exec ghost-mysql mysql -u ghost-814 -p6xJhHy7gsq61hTC3KdVq ghostproduction -e "OPTIMIZE TABLE posts; OPTIMIZE TABLE posts_tags; OPTIMIZE TABLE tags;"
+ssh root@139.180.221.202 "docker exec ghost-mysql mysql -u ghost-814 -p6xJhHy7gsq61hTC3KdVq ghostproduction -e 'OPTIMIZE TABLE posts; OPTIMIZE TABLE posts_tags; OPTIMIZE TABLE tags;'"
 ```
 
-### Server overload:
+### Dọn dẹp Log (Bảng actions) nếu quá nặng:
 ```bash
-# Restart containers để free memory
-ssh root@139.180.221.202
-cd /home/traddingview.com.vn
-docker compose restart ghost nginx
+ssh root@139.180.221.202 "docker exec ghost-mysql mysql -u ghost-814 -p6xJhHy7gsq61hTC3KdVq ghostproduction -e 'DELETE FROM actions WHERE created_at < DATE_SUB(NOW(), INTERVAL 60 DAY); OPTIMIZE TABLE actions;'"
+```
+
+### Server overload / Slow:
+```bash
+# Restart containers để free memory và reload config
+ssh root@139.180.221.202 "cd /home/traddingview.com.vn ; docker compose restart ghost mysql nginx"
 ```
 
 ### Disk space cao:
 ```bash
-# Clean Docker
-ssh root@139.180.221.202
-docker system prune -af --volumes
-```
-
-### Slow queries:
-```bash
-# Enable slow query log (nếu chưa có)
-# Xem OPTIMIZATION_GUIDE.md section 3
+# Clean Docker images/volumes không dùng
+ssh root@139.180.221.202 "docker system prune -f"
 ```
 
 ---
@@ -236,6 +196,5 @@ docker system prune -af --volumes
 ## Lưu ý
 
 - Chạy workflow này **hàng ngày** để monitor
-- Lưu kết quả để so sánh theo thời gian
-- Set up alerts nếu có metrics vượt ngưỡng
-- Backup database trước khi thực hiện bất kỳ optimization nào
+- **LUÔN CONFIRM** với user trước khi chạy các lệnh trong phần Actions.
+- Backup database trước khi thực hiện optimization lớn.
