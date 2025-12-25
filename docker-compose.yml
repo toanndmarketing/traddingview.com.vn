@@ -27,6 +27,7 @@ services:
       - --wait-timeout=86400
       - --interactive-timeout=86400
       - --max-allowed-packet=1073741824
+      - --performance_schema=OFF
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword" ]
       interval: 10s
