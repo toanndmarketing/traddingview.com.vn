@@ -6,8 +6,8 @@ Requires=docker.service
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/home/traddingview.com.vn/scripts
-ExecStart=/usr/bin/node /home/traddingview.com.vn/scripts/cache-purge-server.js
+WorkingDirectory=/home/tradingview.com.vn/scripts
+ExecStart=/usr/bin/node /home/tradingview.com.vn/scripts/cache-purge-server.js
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
