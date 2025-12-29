@@ -5,8 +5,8 @@ services:
     image: mysql:8.0
     container_name: ghost-mysql
     restart: unless-stopped
-    mem_limit: 1200m
-    mem_reservation: 900m
+    mem_limit: 4500m
+    mem_reservation: 3000m
     mem_swappiness: 0
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -21,12 +21,12 @@ services:
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
-      - --innodb-buffer-pool-size=768M
-      - --innodb-log-file-size=256M
-      - --innodb-redo-log-capacity=1G
+      - --innodb-buffer-pool-size=3G
+      - --innodb-log-file-size=512M
+      - --innodb-redo-log-capacity=2G
       - --innodb-flush-log-at-trx-commit=2
-      - --max-connections=100
-      - --table-open-cache=2000
+      - --max-connections=300
+      - --table-open-cache=8000
       - --wait-timeout=86400
       - --interactive-timeout=86400
       - --max-allowed-packet=1073741824
@@ -42,9 +42,9 @@ services:
     image: redis:7-alpine
     container_name: ghost-redis
     restart: unless-stopped
-    mem_limit: 300m
+    mem_limit: 512m
     mem_reservation: 256m
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 400mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
 
@@ -81,14 +81,14 @@ services:
     build: .
     container_name: ghost-tradingview
     restart: unless-stopped
-    mem_limit: 512m
-    mem_reservation: 384m
+    mem_limit: 1024m
+    mem_reservation: 512m
     depends_on:
       mysql:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      NODE_OPTIONS: --max-old-space-size=384
+      NODE_OPTIONS: --max-old-space-size=768
       database__client: mysql
       database__connection__host: mysql
       database__connection__user: ghost-814
