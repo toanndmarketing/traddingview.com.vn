@@ -1,6 +1,6 @@
 function pagination(isInfinite = true, done, isMasonry = false) {
     const feedElement = document.querySelector('.gh-feed');
-    
+
     if (!feedElement) {
         return;
     }
@@ -26,10 +26,10 @@ function pagination(isInfinite = true, done, isMasonry = false) {
             const doc = parser.parseFromString(html, 'text/html');
 
             const postElements = doc.querySelectorAll('.gh-feed:not(.gh-featured):not(.gh-related) > *');
-            
+
             // Limit to 10 items per load
-            const limitedPosts = Array.from(postElements).slice(0, 10);
-            
+            const limitedPosts = Array.from(postElements);
+
             const fragment = document.createDocumentFragment();
             const elems = [];
 

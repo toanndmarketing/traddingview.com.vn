@@ -1,19 +1,20 @@
 {{!--
-    Parameters:
-    * feed (index, home, archive, recent)
-    * postFeedStyle (list, grid)
-    * showTitle (true, false)
-    * showSidebar (true, false)
-    * page (index, home, author, post, page, tag)
+Parameters:
+* feed (index, home, archive, recent)
+* postFeedStyle (list, grid)
+* showTitle (true, false)
+* showSidebar (true, false)
+* page (index, home, author, post, page, tag)
 --}}
 
-<section class="gh-container is-{{#match postFeedStyle "List"}}list{{else}}grid{{/match}}{{#if showSidebar}} has-sidebar{{/if}}{{#unless @custom.show_images_in_feed}} no-image{{/unless}} gh-outer">
+<section
+    class="gh-container is-list{{#if showSidebar}} has-sidebar{{/if}}{{#unless @custom.show_images_in_feed}} no-image{{/unless}} gh-outer">
     <div class="gh-container-inner gh-inner">
-        
+
         {{#if showTitle}}
-            <h2 class="gh-container-title">
-                {{#unless title}}Tin mới nhất{{else}}{{title}}{{/unless}}
-            </h2>
+        <h2 class="gh-container-title">
+            {{#unless title}}Tin mới nhất{{else}}{{title}}{{/unless}}
+        </h2>
         {{/if}}
 
         <main class="gh-main">
@@ -21,34 +22,34 @@
 
                 {{!-- Homepage --}}
                 {{#match feed "home"}}
-                    {{#foreach posts}}
-                        {{> "post-card" lazyLoad=true}}
-                    {{/foreach}}
+                {{#foreach posts}}
+                {{> "post-card" lazyLoad=true}}
+                {{/foreach}}
                 {{/match}}
 
                 {{!-- All posts --}}
                 {{#match feed "index"}}
-                    {{#foreach posts}}
-                        {{> "post-card" lazyLoad=true}}
-                    {{/foreach}}
+                {{#foreach posts}}
+                {{> "post-card" lazyLoad=true}}
+                {{/foreach}}
                 {{/match}}
 
                 {{!-- Tag and author pages --}}
                 {{#match feed "archive"}}
-                    {{#foreach posts}}
-                        {{> "post-card" lazyLoad=true}}
-                    {{/foreach}}
+                {{#foreach posts}}
+                {{> "post-card" lazyLoad=true}}
+                {{/foreach}}
                 {{/match}}
 
             </div>
         </main>
 
         {{#if showSidebar}}
-            <aside class="gh-sidebar">
-                <div class="gh-sidebar-inner">
-                    {{> "sidebars/cta-copytrading"}}
-                </div>
-            </aside>
+        <aside class="gh-sidebar">
+            <div class="gh-sidebar-inner">
+                {{> "sidebars/cta-copytrading"}}
+            </div>
+        </aside>
         {{/if}}
 
     </div>
