@@ -9,10 +9,10 @@ services:
     mem_reservation: 3000m
     mem_swappiness: 0
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: ghostproduction
-      MYSQL_USER: ghost-814
-      MYSQL_PASSWORD: 6xJhHy7gsq61hTC3KdVq
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
@@ -69,13 +69,22 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - WEBHOOK_SECRET=ghost-cache-purge-secret-2024
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     volumes:
       - ./scripts/cache-purge-server.js:/app/server.js:ro
       - nginx_cache:/var/cache/nginx
     command: node server.js
     depends_on:
       - nginx
+
+  # Mail Server cho nội bộ (Mailpit)
+  mailpit:
+    image: axllent/mailpit
+    container_name: ghost-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
   ghost:
     build: .
@@ -87,19 +96,28 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${GHOST_NODE_ENV}
       NODE_OPTIONS: --max-old-space-size=768
       database__client: mysql
       database__connection__host: mysql
-      database__connection__user: ghost-814
-      database__connection__password: 6xJhHy7gsq61hTC3KdVq
-      database__connection__database: ghostproduction
-      adapters__cache__Redis__host: redis
-      adapters__cache__Redis__port: 6379
-      adapters__cache__Redis__ttl: 600
+      database__connection__user: ${MYSQL_USER}
+      database__connection__password: ${MYSQL_PASSWORD}
+      database__connection__database: ${MYSQL_DATABASE}
+      adapters__cache__Redis__host: ${REDIS_HOST}
+      adapters__cache__Redis__port: ${REDIS_PORT}
+      adapters__cache__Redis__ttl: ${REDIS_TTL}
+      # Setup S3 via ENV to keep config clean
+      storage__active: s3
+      storage__s3__accessKeyId: ${S3_ACCESS_KEY_ID}
+      storage__s3__secretAccessKey: ${S3_SECRET_ACCESS_KEY}
+      storage__s3__region: ${S3_REGION}
+      storage__s3__bucket: ${S3_BUCKET}
+      storage__s3__assetHost: ${S3_ASSET_HOST}
+      storage__s3__forcePathStyle: "true"
+      storage__s3__acl: private
     volumes:
       - ./content:/var/lib/ghost/content
-      - ./config.docker.json:/var/lib/ghost/config.production.json
+      # - ./config.docker.json:/var/lib/ghost/config.production.json # Bỏ file này đi, dùng ENV hoàn toàn cho production
     healthcheck:
       test: [ "CMD", "nc", "-z", "127.0.0.1", "3000" ]
       interval: 30s
