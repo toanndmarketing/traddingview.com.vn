@@ -7,6 +7,15 @@ LABEL description="Ghost CMS for TradingView.com.vn with S3 storage adapter"
 # Set working directory
 WORKDIR /var/lib/ghost
 
+# Install system dependencies for Sharp and S3 adapter
+RUN apk add --no-cache \
+    vips \
+    libpng \
+    libwebp \
+    libjpeg-turbo \
+    libc6-compat \
+    fftw
+
 # Copy package.json for S3 adapter
 COPY package.json ./
 
