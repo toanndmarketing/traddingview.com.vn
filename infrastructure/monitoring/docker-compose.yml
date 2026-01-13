@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  server-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: server-monitor
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Mount Docker socket to monitor containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount system directories for monitoring
+      - /var/log:/host/var/log:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      # Mount fail2ban socket
+      - /var/run/fail2ban:/var/run/fail2ban:ro
+    network_mode: host
+    privileged: false
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
