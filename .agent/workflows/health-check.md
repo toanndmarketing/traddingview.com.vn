@@ -8,34 +8,20 @@ description: Kiểm tra tổng thể database, logs và server resources (Dành 
 
 ---
 
-## 🚀 Quick Check (Tất cả trong 1)
+## 🚀 Automated Health Check
 
-Lệnh tối ưu để xem nhanh trạng thái toàn bộ hệ thống. Chạy lệnh này để copy/paste nhanh:
+Script tự động kiểm tra toàn bộ hệ thống Ghost CMS (Database, Containers, Resources, Logs, Performance).
+
+### Bước 1: Upload script lên server
 
 ```bash
-ssh root@57.129.45.30 "docker exec ghost-mysql mysql -u ghost-814 -p'Tr@dingV!ew_User_2025!' ghostproduction -e 'SELECT \"---DB--- \"; SELECT table_name, ROUND(((data_length + index_length) / 1024 / 1024), 2) AS MB FROM information_schema.TABLES WHERE table_schema = \"ghostproduction\" ORDER BY 2 DESC LIMIT 5;' 2>&1 | grep -v Warning; echo; echo '---CONTAINERS---'; cd /home/tradingview.com.vn && docker compose ps; echo; echo '---RESOURCES---'; free -h | grep Mem; df -h | grep '/$'; echo; echo '---ERRORS---'; docker compose logs --tail=50 --since 1h | grep -Ei 'error|fail|502|504' || echo 'Clean'; echo; echo '---WP---'; curl -s -o /dev/null -w 'Time: %{time_total}s\n' http://localhost:3005"
+scp d:\Project\traddingview.com.vn\.agent\scripts\health-check-tradingview.sh root@57.129.45.30:/tmp/health-check.sh
 ```
 
----
-
-## 🔍 Chi Tiết Từng Phần
-
-### Bước 1: Database Sâu
+### Bước 2: Chạy health check
 
 ```bash
-ssh root@57.129.45.30 "docker exec ghost-mysql mysql -u ghost-814 -p'Tr@dingV!ew_User_2025!' ghostproduction -e 'SELECT table_name, ROUND(((data_length + index_length) / 1024 / 1024), 2) AS MB, table_rows FROM information_schema.TABLES WHERE table_schema = \"ghostproduction\" ORDER BY 2 DESC LIMIT 10; SELECT COUNT(*) as actions_count FROM actions;'"
-```
-
-### Bước 2: Logs
-
-```bash
-ssh root@57.129.45.30 "cd /home/tradingview.com.vn && docker compose logs --tail=100 --since 1h | grep -Ei 'error|warn|503|500|fail' || echo 'Clean'"
-```
-
-### Bước 3: Tài nguyên
-
-```bash
-ssh root@57.129.45.30 "echo '---DISK---'; df -h | grep '/$'; echo '---RAM---'; free -h; echo '---CONN---'; ss -ant | grep ESTAB | wc -l"
+ssh root@57.129.45.30 "chmod +x /tmp/health-check.sh && /tmp/health-check.sh"
 ```
 
 ---
