@@ -124,9 +124,12 @@ services:
       storage__s3__assetHost: ${S3_ASSET_HOST}
       storage__s3__forcePathStyle: "true"
       storage__s3__acl: private
+
+    extra_hosts:
+      - "tradingview.com.vn:host-gateway"
     volumes:
       - ./content:/var/lib/ghost/content
-      # - ./config.docker.json:/var/lib/ghost/config.production.json # Bỏ file này đi, dùng ENV hoàn toàn cho production
+      # - ./config.docker.json:/var/lib/ghost/config.production.json
     healthcheck:
       test: [ "CMD", "nc", "-z", "127.0.0.1", "3000" ]
       interval: 30s

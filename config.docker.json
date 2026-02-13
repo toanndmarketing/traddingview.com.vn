@@ -1,0 +1,85 @@
+{
+    "url": "https://tradingview.com.vn",
+    "server": {
+        "port": 3000,
+        "host": "0.0.0.0"
+    },
+    "database": {
+        "client": "mysql",
+        "connection": {
+            "host": "mysql",
+            "user": "ghost-814",
+            "password": "6xJhHy7gsq61hTC3KdVq",
+            "port": 3306,
+            "database": "ghostproduction"
+        },
+        "pool": {
+            "min": 2,
+            "max": 10,
+            "acquireTimeoutMillis": 60000,
+            "createTimeoutMillis": 30000,
+            "destroyTimeoutMillis": 5000,
+            "idleTimeoutMillis": 60000,
+            "reapIntervalMillis": 1000,
+            "createRetryIntervalMillis": 200,
+            "propagateCreateError": false
+        }
+    },
+    "mail": {
+        "transport": "SMTP",
+        "options": {
+            "host": "mailpit",
+            "port": 1025,
+            "auth": null
+        },
+        "from": "'TradingView' <noreply@tradingview.com.vn>"
+    },
+    "logging": {
+        "transports": [
+            "file",
+            "stdout"
+        ]
+    },
+    "process": "local",
+    "paths": {
+        "contentPath": "/var/lib/ghost/content"
+    },
+    "adapters": {
+        "cache": {
+            "Redis": {
+                "host": "redis",
+                "port": 6379
+            }
+        }
+    },
+    "caching": {
+        "frontend": {
+            "maxAge": 60
+        },
+        "301": {
+            "maxAge": 31536000
+        }
+    },
+    "privacy": {
+        "useUpdateCheck": false,
+        "useGravatar": false,
+        "useRpcPing": false,
+        "useStructuredData": true
+    },
+    "internalRequests": {
+        "url": "http://127.0.0.1:3000"
+    },
+    "storage": {
+        "active": "s3",
+        "s3": {
+            "accessKeyId": "REDACTED",
+            "secretAccessKey": "REDACTED",
+            "region": "ap-southeast-1",
+            "bucket": "tradingview-prd",
+            "assetHost": "https://gldt.mql5.vn",
+            "forcePathStyle": true,
+            "signatureVersion": "v4",
+            "acl": "private"
+        }
+    }
+}
