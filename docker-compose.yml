@@ -125,8 +125,14 @@ services:
       storage__s3__forcePathStyle: "true"
       storage__s3__acl: private
 
+      # Disable update check and announcements
+      privacy__useUpdateCheck: "false"
+      announcements__enabled: "false"
+
     extra_hosts:
       - "tradingview.com.vn:host-gateway"
+      - "updates.ghost.org:127.0.0.1"
+      - "sn-updates.ghost.org:127.0.0.1"
     volumes:
       - ./content:/var/lib/ghost/content
       # - ./config.docker.json:/var/lib/ghost/config.production.json

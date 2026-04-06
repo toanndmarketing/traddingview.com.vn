@@ -66,6 +66,9 @@
         "useRpcPing": false,
         "useStructuredData": true
     },
+    "updateCheck": {
+        "period": 0
+    },
     "internalRequests": {
         "url": "http://127.0.0.1:3000"
     },
