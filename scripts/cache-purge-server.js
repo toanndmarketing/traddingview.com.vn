@@ -116,8 +116,16 @@ setInterval(fetchNewsFromOrigin, 3 * 60 * 1000); // 3 phút / lần
 // HTTP SERVER ROUTER
 // ==========================================
 const server = http.createServer(async (req, res) => {
-    // Cấu hình Header mặc định cho JSON
-    const headersJson = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+    // Cấu hình Header mặc định cho JSON (chỉ cho phép CORS từ tradingview.com.vn và localhost/127.0.0.1)
+    const origin = req.headers.origin || '';
+    let allowOrigin = 'https://tradingview.com.vn';
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        allowOrigin = origin;
+    }
+    const headersJson = { 
+        'Content-Type': 'application/json', 
+        'Access-Control-Allow-Origin': allowOrigin 
+    };
 
     // Health check
     if (req.url === '/health') {
