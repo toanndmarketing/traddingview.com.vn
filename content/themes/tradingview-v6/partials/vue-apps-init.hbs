@@ -1,67 +1,63 @@
 <script>
-// Initialize Vue Apps after DOM and libraries loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== Vue Apps Init ===');
-    console.log('Vue:', typeof Vue !== 'undefined');
-    console.log('axios:', typeof axios !== 'undefined');
-    console.log('dateFns:', typeof dateFns !== 'undefined');
-
+document.addEventListener('DOMContentLoaded', function () {
     if (typeof Vue === 'undefined') {
-        console.error('Vue not available!');
+        console.error('Vue not available');
         return;
     }
 
     const { ref, onMounted, onBeforeUnmount } = Vue;
 
-    // Sentiment App
     if (document.getElementById('appSentiment')) {
         Vue.createApp({
             setup() {
                 const fetchedSentiments = ref([]);
-                const API_URL = "https://api.fastbull.com/fastbull-macro-data-service/api/v2/getIndexSpeculative";
+                const SENTIMENT_API = '/api/ext/fastbull/sentiment';
 
                 const fetchSentiments = async () => {
                     try {
-                        const response = await fetch(API_URL, {
-                            method: "GET",
-                            headers: { "Content-Type": "application/json", Accept: "*/*" }
+                        const response = await fetch(SENTIMENT_API, {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json', Accept: '*/*' }
                         });
-                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
                         const data = await response.json();
-                        if (typeof data.bodyMessage === "string") {
+                        if (typeof data.bodyMessage === 'string') {
                             const parsedData = JSON.parse(data.bodyMessage);
                             fetchedSentiments.value = Array.isArray(parsedData) ? parsedData : Object.values(parsedData);
                         } else if (Array.isArray(data.bodyMessage)) {
                             fetchedSentiments.value = data.bodyMessage;
+                        } else if (data.bodyMessage && typeof data.bodyMessage === 'object') {
+                            fetchedSentiments.value = Object.values(data.bodyMessage);
                         }
-                        console.log('[Sentiment] Loaded:', fetchedSentiments.value.length);
                     } catch (error) {
-                        console.error("[Sentiment] Error:", error);
+                        console.error('[Sentiment] Error:', error);
                     }
                 };
 
                 onMounted(() => fetchSentiments());
 
                 const formatPercentage = (value) => {
-                    return value ? new Intl.NumberFormat("en-US", {
-                        style: "percent",
+                    return value ? new Intl.NumberFormat('en-US', {
+                        style: 'percent',
                         minimumFractionDigits: 1,
-                        maximumFractionDigits: 1,
-                    }).format(value / 100) : "0.0%";
+                        maximumFractionDigits: 1
+                    }).format(value / 100) : '0.0%';
                 };
 
-                const getStylePercent = (item, type = "long") => {
-                    const value = type === "long" ? item.longValue : item.shortValue;
-                    return { width: value > 0 ? `${value}%` : "0%" };
+                const getStylePercent = (item, type = 'long') => {
+                    const value = type === 'long' ? item.longValue : item.shortValue;
+                    return { width: value > 0 ? `${value}%` : '0%' };
                 };
 
                 return { fetchedSentiments, formatPercentage, getStylePercent };
-            },
-        }).mount("#appSentiment");
-        console.log('[Sentiment] Mounted');
+            }
+        }).mount('#appSentiment');
     }
 
-    // News App
     if (document.getElementById('appNews') && typeof axios !== 'undefined' && typeof dateFns !== 'undefined') {
         const formatDate = (timestamp, dateFormat = 'dd-MM-yyyy HH:mm:ss') => {
             const date = new Date(timestamp);
@@ -73,69 +69,186 @@ document.addEventListener('DOMContentLoaded', function() {
                 const socket = ref(null);
                 const fetchedNews = ref({ pageDatas: [] });
                 const isLoading = ref(true);
-                const config = {
-                    apiFastBull: 'https://api.fastbull.com',
-                    wssFastBull: 'wss://wsspush.fastbull.com'
+                const pollTimer = ref(null);
+                const reconnectTimer = ref(null);
+                const isUnmounted = ref(false);
+
+                const NEWS_API = '/api/ext/fastbull/news';
+                const WS_PATH = '/ws/ext/fastbull/news';
+                const POLLING_INTERVAL_MS = 8000;
+                const WS_RECONNECT_MS = 5000;
+
+                const getWsUrl = () => {
+                    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    return `${wsProtocol}//${window.location.host}${WS_PATH}`;
                 };
 
-                const fetchNews = async () => {
-                    try {
-                        isLoading.value = true;
-                        const response = await axios.get(`${config.apiFastBull}/fastbull-news-service/api/getNewsPageByTagIds`, {
-                            headers: { 'Content-Type': 'application/json', 'langId': 10 },
-                            params: { pageSize: 50 }  // Giảm từ 500 xuống 50 để load nhanh hơn
-                        });
-                        const newsData = JSON.parse(response.data.bodyMessage);
-                        fetchedNews.value = newsData;
-                        console.log('[News] Loaded:', newsData.pageDatas?.length);
-                        return newsData;
-                    } catch (error) {
-                        console.error('[News] Error:', error);
+                const safePageData = (payload) => {
+                    if (!payload || !Array.isArray(payload.pageDatas)) {
                         return { pageDatas: [] };
-                    } finally {
-                        isLoading.value = false;
+                    }
+
+                    return payload;
+                };
+
+                const mergeNewsItem = (item) => {
+                    if (!item || !item.newsId) return;
+                    if (!Array.isArray(fetchedNews.value.pageDatas)) {
+                        fetchedNews.value.pageDatas = [];
+                    }
+
+                    const exists = fetchedNews.value.pageDatas.some((news) => news.newsId === item.newsId);
+                    if (!exists) {
+                        fetchedNews.value.pageDatas.unshift(item);
                     }
                 };
 
+                const parseWsPayload = (rawText) => {
+                    if (!rawText || (!isNaN(rawText) && rawText.trim().length < 5)) {
+                        return null;
+                    }
+
+                    const jsonData = JSON.parse(rawText);
+                    if (jsonData.messageInfo) {
+                        return JSON.parse(jsonData.messageInfo);
+                    }
+
+                    if (jsonData.newsTitle) {
+                        return jsonData;
+                    }
+
+                    return null;
+                };
+
+                const fetchNews = async (withLoading = false) => {
+                    try {
+                        if (withLoading) {
+                            isLoading.value = true;
+                        }
+
+                        const response = await axios.get(NEWS_API, {
+                            headers: { 'Content-Type': 'application/json', langId: 10 },
+                            params: { pageSize: 50 }
+                        });
+
+                        const bodyMessage = response?.data?.bodyMessage;
+                        const parsedNews = typeof bodyMessage === 'string' ? JSON.parse(bodyMessage) : bodyMessage;
+                        const newsData = safePageData(parsedNews);
+                        fetchedNews.value = newsData;
+                    } catch (error) {
+                        console.error('[News] Error:', error);
+                    } finally {
+                        if (withLoading) {
+                            isLoading.value = false;
+                        }
+                    }
+                };
+
+                const stopPolling = () => {
+                    if (pollTimer.value) {
+                        clearInterval(pollTimer.value);
+                        pollTimer.value = null;
+                    }
+                };
+
+                const startPolling = () => {
+                    if (pollTimer.value) return;
+
+                    pollTimer.value = setInterval(async () => {
+                        await fetchNews(false);
+                    }, POLLING_INTERVAL_MS);
+                };
+
+                const clearReconnectTimer = () => {
+                    if (reconnectTimer.value) {
+                        clearTimeout(reconnectTimer.value);
+                        reconnectTimer.value = null;
+                    }
+                };
+
+                const scheduleReconnect = () => {
+                    if (isUnmounted.value || reconnectTimer.value) return;
+
+                    reconnectTimer.value = setTimeout(() => {
+                        reconnectTimer.value = null;
+                        connectWebSocket();
+                    }, WS_RECONNECT_MS);
+                };
+
                 const connectWebSocket = () => {
-                    socket.value = new WebSocket(`${config.wssFastBull}/news?langId=10`);
-                    socket.value.onopen = () => console.log('[News] WebSocket opened');
+                    if (isUnmounted.value) return;
+
+                    try {
+                        socket.value = new WebSocket(getWsUrl());
+                    } catch (error) {
+                        console.error('[News] WS create error:', error);
+                        startPolling();
+                        scheduleReconnect();
+                        return;
+                    }
+
+                    socket.value.onopen = () => {
+                        stopPolling();
+                    };
+
                     socket.value.onmessage = (event) => {
                         if (event.data instanceof Blob) {
                             const reader = new FileReader();
                             reader.onload = () => {
-                                const jsonData = JSON.parse(reader.result);
-                                if (jsonData.messageInfo) {
-                                    fetchedNews.value.pageDatas.unshift(JSON.parse(jsonData.messageInfo));
+                                try {
+                                    const newsItem = parseWsPayload(String(reader.result || ''));
+                                    if (newsItem) {
+                                        mergeNewsItem(newsItem);
+                                    }
+                                } catch (error) {
+                                    console.error('[News] Parse error (blob):', error);
                                 }
                             };
                             reader.readAsText(event.data);
-                        } else {
-                            try {
-                                const jsonData = JSON.parse(event.data);
-                                fetchedNews.value.pageDatas.unshift(JSON.parse(jsonData.messageInfo));
-                            } catch (error) {
-                                console.error('[News] Parse error:', error);
+                            return;
+                        }
+
+                        try {
+                            const newsItem = parseWsPayload(String(event.data || ''));
+                            if (newsItem) {
+                                mergeNewsItem(newsItem);
                             }
+                        } catch (error) {
+                            console.error('[News] Parse error:', error);
                         }
                     };
-                    socket.value.onerror = (error) => console.error('[News] WS error:', error);
-                    socket.value.onclose = () => setTimeout(connectWebSocket, 5000);
+
+                    socket.value.onerror = (error) => {
+                        console.error('[News] WS error:', error);
+                        startPolling();
+                    };
+
+                    socket.value.onclose = () => {
+                        if (isUnmounted.value) return;
+                        startPolling();
+                        scheduleReconnect();
+                    };
                 };
 
                 onMounted(async () => {
-                    await fetchNews();
+                    await fetchNews(true);
+                    startPolling();
                     connectWebSocket();
                 });
 
                 onBeforeUnmount(() => {
-                    if (socket.value) socket.value.close();
+                    isUnmounted.value = true;
+                    stopPolling();
+                    clearReconnectTimer();
+
+                    if (socket.value) {
+                        socket.value.close();
+                    }
                 });
 
                 return { fetchedNews, formatDate, isLoading };
             }
         }).mount('#appNews');
-        console.log('[News] Mounted');
     }
 });
 </script>
