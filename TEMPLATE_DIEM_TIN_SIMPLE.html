@@ -59,14 +59,14 @@ createApp({
         const refreshInterval = ref(null);
 
         const config = {
-            apiFastBull: 'https://api.fastbull.com',
-            wssFastBull: 'wss://wsspush.fastbull.com'
+            apiFastBull: window.location.origin + '/api/ext/fastbull',
+            wssFastBull: (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + window.location.host + '/ws/ext/fastbull'
         };
 
         // Fetch tin tức
         const fetchNews = async (isTopNews = false) => {
             try {
-                const response = await axios.get(`${config.apiFastBull}/fastbull-news-service/api/getNewsPageByTagIds`, {
+                const response = await axios.get(`${config.apiFastBull}/news`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'langId': 10
@@ -76,7 +76,8 @@ createApp({
                         ...(isTopNews && { checkImportant: 1 })
                     }
                 });
-                const newsData = JSON.parse(response.data.bodyMessage);
+                const bodyMessage = response.data.bodyMessage;
+                const newsData = typeof bodyMessage === 'string' ? JSON.parse(bodyMessage) : bodyMessage;
                 fetchedNews.value = newsData;
                 console.log('Loaded news:', newsData.pageDatas.length);
                 return newsData;
@@ -93,7 +94,7 @@ createApp({
 
         // Khởi tạo WebSocket
         const connectWebSocket = () => {
-            socket.value = new WebSocket(`${config.wssFastBull}/news?langId=10`);
+            socket.value = new WebSocket(`${config.wssFastBull}/news`);
 
             socket.value.onopen = () => {
                 console.log('WebSocket connected');
