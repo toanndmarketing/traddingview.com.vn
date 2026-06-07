@@ -148,10 +148,15 @@ const server = http.createServer(async (req, res) => {
     // API Get News (trả về tin tức cache trong ngày)
     if (req.method === 'GET' && req.url.startsWith('/news')) {
         res.writeHead(200, headersJson);
+        const isImportantOnly = req.url.includes('checkImportant=1');
+        const dataToReturn = isImportantOnly 
+            ? newsCache.filter(item => item.important === 1) 
+            : newsCache;
+
         const responseData = {
             code: 200,
             message: "success",
-            bodyMessage: JSON.stringify({ pageDatas: newsCache })
+            bodyMessage: JSON.stringify({ pageDatas: dataToReturn })
         };
         return res.end(JSON.stringify(responseData));
     }
