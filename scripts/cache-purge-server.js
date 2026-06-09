@@ -24,12 +24,8 @@ function purgeNginxCache() {
     });
 }
 
-// Lọc và gộp tin tức trong ngày GMT+7
+// Lọc và gộp 200 tin tức gần nhất
 function updateNewsCache(newItems) {
-    // GMT+7 Date
-    const nowVN = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
-    const todayStr = nowVN.toISOString().split('T')[0]; // YYYY-MM-DD
-
     const newsMap = new Map();
     // Nạp tin cũ vào map
     newsCache.forEach(item => {
@@ -40,42 +36,43 @@ function updateNewsCache(newItems) {
         newsMap.set(item.newsId, item);
     });
 
-    // Lọc lại các tin thuộc ngày hôm nay (theo giờ VN)
-    const filteredList = Array.from(newsMap.values()).filter(item => {
-        if (!item.releasedDate) return false;
-        const newsDateVN = new Date(item.releasedDate + 7 * 60 * 60 * 1000);
-        const newsDateStr = newsDateVN.toISOString().split('T')[0];
-        return newsDateStr === todayStr;
-    });
+    const allList = Array.from(newsMap.values());
 
     // Sắp xếp mới nhất lên đầu
-    filteredList.sort((a, b) => b.releasedDate - a.releasedDate);
+    allList.sort((a, b) => b.releasedDate - a.releasedDate);
 
-    newsCache = filteredList;
-    console.log(`[CRAWLER] Updated news cache. Total items for ${todayStr}: ${newsCache.length}`);
+    // Chỉ giữ lại tối đa 200 tin gần nhất
+    newsCache = allList.slice(0, 200);
+    console.log(`[CRAWLER] Updated news cache. Total items in cache: ${newsCache.length}`);
 }
 
 // Hàm fetch tin tức từ FastBull
 async function fetchNewsFromOrigin() {
     try {
-        console.log('[CRAWLER] Fetching news from FastBull...');
-        const url = 'https://api.fastbull.com/fastbull-news-service/api/getNewsPageByTagIds?pageSize=100';
-        const res = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                'langId': '10'
+        console.log('[CRAWLER] Fetching news from FastBull (Page 1 & 2)...');
+        
+        const fetchPage = async (pageNum) => {
+            const url = `https://api.fastbull.com/fastbull-news-service/api/getNewsPageByTagIds?pageSize=100&pageNum=${pageNum}`;
+            const res = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'langId': '10'
+                }
+            });
+            if (!res.ok) throw new Error(`HTTP error page ${pageNum}! status: ${res.status}`);
+            const data = await res.json();
+            let bodyMessage = data.bodyMessage;
+            if (typeof bodyMessage === 'string') {
+                bodyMessage = JSON.parse(bodyMessage);
             }
-        });
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
+            return bodyMessage && Array.isArray(bodyMessage.pageDatas) ? bodyMessage.pageDatas : [];
+        };
+
+        const [page1, page2] = await Promise.all([fetchPage(1), fetchPage(2)]);
+        const combined = [...page1, ...page2];
         
-        let bodyMessage = data.bodyMessage;
-        if (typeof bodyMessage === 'string') {
-            bodyMessage = JSON.parse(bodyMessage);
-        }
-        
-        if (bodyMessage && Array.isArray(bodyMessage.pageDatas)) {
-            updateNewsCache(bodyMessage.pageDatas);
+        if (combined.length > 0) {
+            updateNewsCache(combined);
         }
     } catch (err) {
         console.error('[CRAWLER] Error fetching news:', err.message);
