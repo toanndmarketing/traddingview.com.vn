@@ -88,6 +88,7 @@ function dropdown() {
         setTimeout(() => {
             nav.innerHTML = navHTML;
             makeDropdown();
+            window.dispatchEvent(new Event('navigation-rebuilt'));
         }, 1);
     });
 }

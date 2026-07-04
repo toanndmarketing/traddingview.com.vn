@@ -13,6 +13,23 @@
             document.documentElement.style.overflowY = null;
         }
     });
+
+    // Reset mobile menu and body scroll when viewport expands beyond mobile breakpoint (767px)
+    const mql = window.matchMedia('(max-width: 767px)');
+    function handleMediaQueryChange(e) {
+        if (!e.matches) {
+            if (navigation.classList.contains('is-open')) {
+                navigation.classList.remove('is-open');
+                document.documentElement.style.overflowY = null;
+            }
+        }
+    }
+
+    if (typeof mql.addEventListener === 'function') {
+        mql.addEventListener('change', handleMediaQueryChange);
+    } else if (typeof mql.addListener === 'function') {
+        mql.addListener(handleMediaQueryChange);
+    }
 })();
 
 /* Add lightbox to gallery images */

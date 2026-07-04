@@ -11,9 +11,23 @@
 {{ else }}
 	<ul id="navigation" class="nav">
         {{#foreach navigation}}
-            <li class="{{link_class for=(url) class=(concat 'nav-' slug)}}">
-                <a href="{{url absolute='true'}}">{{label}}</a>
-            </li>
+            {{#match slug "phan-tich"}}
+                <li class="{{link_class for=(url) class=(concat 'nav-' slug)}} has-submenu" data-submenu-key="phan-tich">
+                    <a href="{{url absolute='true'}}">{{label}}</a>
+                    <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <ul class="dropdown-menu" aria-label="Submenu">
+                        <li class="nav-item nav-thi-truong-hom-nay"><a class="nav-link" href="/tag/thi-truong-hom-nay/">Thị Trường Hôm Nay</a></li>
+                        <li class="nav-item nav-vang"><a class="nav-link" href="/tag/vang-xauusd/">Vàng</a></li>
+                        <li class="nav-item nav-tien-te"><a class="nav-link" href="/tag/tien-te-forex/">Tiền Tệ</a></li>
+                        <li class="nav-item nav-bac"><a class="nav-link" href="/tag/bac-xagusd/">Bạc</a></li>
+                        <li class="nav-item nav-dau"><a class="nav-link" href="/tag/dau-wti/">Dầu</a></li>
+                    </ul>
+                </li>
+            {{else}}
+                <li class="{{link_class for=(url) class=(concat 'nav-' slug)}}">
+                    <a href="{{url absolute='true'}}">{{label}}</a>
+                </li>
+            {{/match}}
         {{/foreach}}
     </ul>
 {{/if}}
