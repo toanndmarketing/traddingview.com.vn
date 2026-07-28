@@ -1,0 +1,17 @@
+---
+description: wb-agent rules for traddingview.com.vn
+globs: "**/*"
+alwaysApply: true
+---
+
+# traddingview.com.vn — Cursor Rules
+
+## Context
+- Đọc `.agents/identity/master-identity.md` trước mọi task.
+- Tuân thủ `.agents/memory/constitution.md`.
+- Docker-First: chạy app trong container.
+
+## Code Style
+- Tiếng Việt responses.
+- No hard-coded URLs/Tokens/Keys.
+- SDD flow: Specify → Plan → Tasks → Implement.
